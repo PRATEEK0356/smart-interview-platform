@@ -7,3 +7,9 @@
     @apply bg-white text-slate-900 antialiased;
   }
 }
+
+@layer utilities {
+  .font-baskerville {
+    font-family: 'Baskerville Old Face', 'Baskerville', 'Hoefler Text', 'Garamond', 'Times New Roman', serif;
+  }
+}
