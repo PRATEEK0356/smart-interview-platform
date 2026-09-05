@@ -2,7 +2,8 @@ import React, { useState, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { logout, updateProfileImage } from '../features/auth/authSlice';
-import { Sparkles, LayoutDashboard, PlayCircle, LogOut, Camera, Trash2, X, User, Loader2 } from 'lucide-react';
+import ImageCropperModal from './ImageCropperModal';
+import { Sparkles, LayoutDashboard, PlayCircle, LogOut, Camera, Trash2, X, User, Loader2, Crop } from 'lucide-react';
 
 const Navbar = () => {
   const dispatch = useDispatch();
@@ -12,6 +13,7 @@ const Navbar = () => {
   
   const { user, isAuthenticated } = useSelector((state) => state.auth);
   const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
+  const [imageToCrop, setImageToCrop] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState(null);
 
@@ -20,74 +22,37 @@ const Navbar = () => {
     navigate('/login');
   };
 
-  // Helper to downscale and compress any selected JPG/PNG/WEBP to 300x300 avatar JPEG
-  const compressImage = (file) => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = (event) => {
-        const img = new Image();
-        img.src = event.target.result;
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          const maxDim = 300;
-          let width = img.width;
-          let height = img.height;
-
-          if (width > height) {
-            if (width > maxDim) {
-              height = Math.round((height * maxDim) / width);
-              width = maxDim;
-            }
-          } else {
-            if (height > maxDim) {
-              width = Math.round((width * maxDim) / height);
-              height = maxDim;
-            }
-          }
-
-          canvas.width = width;
-          canvas.height = height;
-
-          const ctx = canvas.getContext('2d');
-          ctx.drawImage(img, 0, 0, width, height);
-
-          // Convert to clean JPEG format with 0.85 quality
-          const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
-          resolve(dataUrl);
-        };
-        img.onerror = (err) => reject(err);
-      };
-      reader.onerror = (err) => reject(err);
-    });
-  };
-
-  const handleFileChange = async (e) => {
+  const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
     setUploadError(null);
 
-    // Accept jpg, jpeg, png, webp, and general image formats
-    const isJpgOrImage = file.type.startsWith('image/') || /\.(jpg|jpeg|png|webp|gif)$/i.test(file.name);
-    if (!isJpgOrImage) {
+    const isImage = file.type.startsWith('image/') || /\.(jpg|jpeg|png|webp|gif)$/i.test(file.name);
+    if (!isImage) {
       setUploadError('Please select a JPG, JPEG, PNG, or WEBP image file.');
       return;
     }
 
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setImageToCrop(event.target.result);
+      setIsAvatarModalOpen(false); // Close settings modal, open cropper modal
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleCropComplete = async (croppedDataUri) => {
     try {
       setIsUploading(true);
-      const compressedJpgBase64 = await compressImage(file);
-      const actionResult = await dispatch(updateProfileImage({ profileImage: compressedJpgBase64 }));
-
-      if (updateProfileImage.fulfilled.match(actionResult)) {
-        setIsAvatarModalOpen(false);
-      } else {
-        setUploadError(actionResult.payload || 'Failed to upload JPG image.');
+      setImageToCrop(null);
+      const actionResult = await dispatch(updateProfileImage({ profileImage: croppedDataUri }));
+      if (!updateProfileImage.fulfilled.match(actionResult)) {
+        setUploadError(actionResult.payload || 'Failed to update profile photo.');
       }
     } catch (err) {
-      console.error('Image compression error:', err);
-      setUploadError('Failed to process JPG image file.');
+      console.error('Profile image update error:', err);
+      setUploadError('Failed to save cropped photo.');
     } finally {
       setIsUploading(false);
     }
@@ -157,7 +122,7 @@ const Navbar = () => {
                   setUploadError(null);
                   setIsAvatarModalOpen(true);
                 }}
-                title="Manage Profile Photo"
+                title="Manage Profile Photo & Crop"
                 className="relative group focus:outline-none"
               >
                 {user?.profileImage ? (
@@ -193,7 +158,7 @@ const Navbar = () => {
         </div>
       </header>
 
-      {/* Profile Avatar Management Modal */}
+      {/* Profile Avatar Management Settings Modal */}
       {isAvatarModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 font-sans">
           <div className="bg-white border-2 border-blue-500 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-6 relative animate-fadeIn">
@@ -203,7 +168,7 @@ const Navbar = () => {
                 <div className="p-1.5 rounded-lg border-2 border-blue-600 bg-blue-50 text-blue-600">
                   <User className="w-4 h-4" />
                 </div>
-                <span>Profile Photo Settings</span>
+                <span>Profile Avatar Settings</span>
               </h3>
               <button
                 onClick={() => setIsAvatarModalOpen(false)}
@@ -238,7 +203,7 @@ const Navbar = () => {
               </div>
             </div>
 
-            {/* Hidden File Input for JPG/JPEG/PNG */}
+            {/* Hidden File Input */}
             <input
               type="file"
               ref={fileInputRef}
@@ -257,12 +222,12 @@ const Navbar = () => {
                 {isUploading ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>Processing & Uploading JPG...</span>
+                    <span>Saving Avatar...</span>
                   </>
                 ) : (
                   <>
-                    <Camera className="w-4 h-4" />
-                    <span>Upload JPG / Image from Gallery</span>
+                    <Crop className="w-4 h-4" />
+                    <span>Select Photo from Gallery & Crop</span>
                   </>
                 )}
               </button>
@@ -287,6 +252,15 @@ const Navbar = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Interactive Image Cropper Modal */}
+      {imageToCrop && (
+        <ImageCropperModal
+          imageSrc={imageToCrop}
+          onCropComplete={handleCropComplete}
+          onCancel={() => setImageToCrop(null)}
+        />
       )}
     </>
   );
