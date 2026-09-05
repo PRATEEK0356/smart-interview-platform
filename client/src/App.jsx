@@ -6,6 +6,8 @@ import Navbar from './components/Navbar';
 import ProtectedRoute from './components/ProtectedRoute';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
+import StartInterviewPage from './pages/StartInterviewPage';
+import InterviewPage from './pages/InterviewPage';
 
 const PlaceholderPage = ({ title }) => (
   <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 text-center">
@@ -36,8 +38,8 @@ function App() {
           {/* Protected Routes */}
           <Route element={<ProtectedRoute />}>
             <Route path="/dashboard" element={<PlaceholderPage title="Dashboard" />} />
-            <Route path="/start" element={<PlaceholderPage title="Start Interview" />} />
-            <Route path="/interview/:id" element={<PlaceholderPage title="Live Interview Session" />} />
+            <Route path="/start" element={<StartInterviewPage />} />
+            <Route path="/interview/:id" element={<InterviewPage />} />
             <Route path="/report/:id" element={<PlaceholderPage title="Session Report" />} />
           </Route>
 
