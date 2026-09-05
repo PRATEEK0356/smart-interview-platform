@@ -7,6 +7,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import DashboardPage from './pages/DashboardPage';
 import StartInterviewPage from './pages/StartInterviewPage';
 import InterviewPage from './pages/InterviewPage';
@@ -27,13 +28,14 @@ function App() {
       <Navbar />
       <main className="flex-1">
         <Routes>
-          {/* Public Landing Page */}
+          {/* Public Routes */}
           <Route
             path="/"
             element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <LandingPage />}
           />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
 
           {/* Protected Candidate Routes */}
           <Route element={<ProtectedRoute />}>

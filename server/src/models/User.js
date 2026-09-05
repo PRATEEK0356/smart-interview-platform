@@ -24,6 +24,14 @@ const userSchema = new mongoose.Schema(
       default: 'Full Stack Engineer',
       trim: true,
     },
+    resetOtp: {
+      type: String,
+      default: null,
+    },
+    resetOtpExpire: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true,
