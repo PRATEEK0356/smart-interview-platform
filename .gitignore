@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+
+# Environment and Secrets
+.env
+.env.local
+*.env
+
+# Build outputs
+dist/
+build/
+*.egg-info/
+
+# Logs
+*.log
+npm-debug.log*
+
+# System & IDE
+.DS_Store
+.vscode/
+.idea/
