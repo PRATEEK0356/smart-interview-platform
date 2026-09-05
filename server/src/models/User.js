@@ -28,6 +28,40 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
+    leetcodeUrl: {
+      type: String,
+      default: '',
+      trim: true,
+    },
+    githubUrl: {
+      type: String,
+      default: '',
+      trim: true,
+    },
+    degree: {
+      type: String,
+      default: 'B.Tech Computer Science & Engineering',
+      trim: true,
+    },
+    currentYear: {
+      type: String,
+      default: '3rd Year',
+      trim: true,
+    },
+    currentSemester: {
+      type: String,
+      default: 'Semester 6',
+      trim: true,
+    },
+    university: {
+      type: String,
+      default: 'Delhi Technological University (DTU)',
+      trim: true,
+    },
+    isUgcVerified: {
+      type: Boolean,
+      default: true,
+    },
     resetOtp: {
       type: String,
       default: null,

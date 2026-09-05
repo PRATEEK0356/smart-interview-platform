@@ -20,6 +20,11 @@ export const updateProfileImageApi = async (imageData) => {
   return response.data;
 };
 
+export const updateUserProfileApi = async (profileData) => {
+  const response = await axiosClient.put('/auth/profile', profileData);
+  return response.data;
+};
+
 export const forgotPasswordApi = async (emailData) => {
   const response = await axiosClient.post('/auth/forgot-password', emailData);
   return response.data;

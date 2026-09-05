@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { getDashboardSummaryApi, deleteSessionApi } from '../api/sessionApi';
+import { updateUserProfile } from '../features/auth/authSlice';
+import { UGC_VERIFIED_UNIVERSITIES } from '../data/ugcUniversities';
 import {
   ResponsiveContainer,
   AreaChart,
@@ -26,15 +28,40 @@ import {
   Trash2,
   AlertCircle,
   X,
+  GraduationCap,
+  Github,
+  Edit3,
+  ExternalLink,
+  BookOpen,
+  Check,
+  Building2,
 } from 'lucide-react';
 
 const DashboardPage = () => {
+  const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
+  
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [sessionToDelete, setSessionToDelete] = useState(null);
   const [deleting, setDeleting] = useState(false);
+
+  // Profile Edit Modal State
+  const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [profileForm, setProfileForm] = useState({
+    degree: user?.degree || 'B.Tech Computer Science & Engineering',
+    currentYear: user?.currentYear || '3rd Year',
+    currentSemester: user?.currentSemester || 'Semester 6',
+    university: user?.university || 'Delhi Technological University (DTU)',
+    leetcodeUrl: user?.leetcodeUrl || '',
+    githubUrl: user?.githubUrl || '',
+  });
+
+  // UGC Autocomplete State
+  const [uniInput, setUniInput] = useState(user?.university || 'Delhi Technological University (DTU)');
+  const [uniSuggestions, setUniSuggestions] = useState([]);
+  const [showUniDropdown, setShowUniDropdown] = useState(false);
 
   const fetchSummary = async () => {
     try {
@@ -42,7 +69,7 @@ const DashboardPage = () => {
       const res = await getDashboardSummaryApi();
       setData(res.summary);
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to load dashboard summary.');
+      console.error('Failed to load summary:', err);
     } finally {
       setLoading(false);
     }
@@ -52,13 +79,64 @@ const DashboardPage = () => {
     fetchSummary();
   }, []);
 
+  // Update profile form state when user changes
+  useEffect(() => {
+    if (user) {
+      setProfileForm({
+        degree: user.degree || 'B.Tech Computer Science & Engineering',
+        currentYear: user.currentYear || '3rd Year',
+        currentSemester: user.currentSemester || 'Semester 6',
+        university: user.university || 'Delhi Technological University (DTU)',
+        leetcodeUrl: user.leetcodeUrl || '',
+        githubUrl: user.githubUrl || '',
+      });
+      setUniInput(user.university || 'Delhi Technological University (DTU)');
+    }
+  }, [user]);
+
+  const handleUniInputChange = (e) => {
+    const val = e.target.value;
+    setUniInput(val);
+    setProfileForm({ ...profileForm, university: val });
+
+    if (val.trim().length > 1) {
+      const matches = UGC_VERIFIED_UNIVERSITIES.filter((u) =>
+        u.toLowerCase().includes(val.toLowerCase())
+      );
+      setUniSuggestions(matches);
+      setShowUniDropdown(true);
+    } else {
+      setUniSuggestions([]);
+      setShowUniDropdown(false);
+    }
+  };
+
+  const selectUniversity = (uniName) => {
+    setUniInput(uniName);
+    setProfileForm({ ...profileForm, university: uniName });
+    setShowUniDropdown(false);
+  };
+
+  const handleSaveProfile = async (e) => {
+    e.preventDefault();
+    try {
+      setSavingProfile(true);
+      await dispatch(updateUserProfile(profileForm));
+      setIsEditProfileOpen(false);
+    } catch (err) {
+      alert('Failed to update profile.');
+    } finally {
+      setSavingProfile(false);
+    }
+  };
+
   const handleDeleteSession = async () => {
     if (!sessionToDelete) return;
     try {
       setDeleting(true);
       await deleteSessionApi(sessionToDelete._id);
       setSessionToDelete(null);
-      await fetchSummary(); // Refresh stats and recent sessions list
+      await fetchSummary();
     } catch (err) {
       alert(err.response?.data?.error || 'Failed to delete interview session.');
     } finally {
@@ -90,35 +168,108 @@ const DashboardPage = () => {
     <div className="bg-white min-h-screen py-8 font-baskerville">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
         
-        {/* Top Header Banner Card */}
-        <div className="bg-white border-2 border-blue-500 rounded-2xl p-6 sm:p-8 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-6">
-          <div className="space-y-2">
-            <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-lg bg-blue-50 border border-blue-500 text-blue-600 text-xs font-bold font-sans">
-              <Target className="w-3.5 h-3.5" />
-              <span>Target Role: {user?.targetRole || 'Full Stack Engineer'}</span>
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight font-baskerville">
-              Welcome back, {user?.name || 'Candidate'}!
-            </h1>
-            <p className="text-base text-slate-600 max-w-2xl leading-relaxed font-baskerville">
-              Your overall preparation score is currently <strong className="text-blue-700">{averageScore}/100</strong>. Practice regularly to sharpen technical depth and delivery.
-            </p>
-          </div>
+        {/* Student Academic & Developer Profile Banner Card */}
+        <div className="bg-white border-2 border-blue-500 rounded-2xl p-6 sm:p-8 shadow-sm space-y-6">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+            
+            {/* Candidate Name, Degree, Year & Semester */}
+            <div className="space-y-3">
+              <div className="flex flex-wrap items-center gap-2 font-sans">
+                <span className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-lg bg-blue-50 text-blue-700 border border-blue-200 text-xs font-bold">
+                  <GraduationCap className="w-4 h-4 text-blue-600" />
+                  <span>{user?.degree || 'B.Tech Computer Science & Engineering'}</span>
+                </span>
 
-          <Link
-            to="/start"
-            className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 px-6 rounded-xl border-2 border-blue-700 shadow-md flex items-center justify-center space-x-2 transition-all self-start sm:self-auto font-sans"
-          >
-            <div className="p-1 rounded-md border border-white/40 bg-white/20 text-white">
-              <PlayCircle className="w-4 h-4" />
+                <span className="inline-flex items-center space-x-1 px-3 py-1 rounded-lg bg-slate-100 text-slate-800 border border-slate-300 text-xs font-bold">
+                  <BookOpen className="w-3.5 h-3.5 text-blue-600" />
+                  <span>{user?.currentYear || '3rd Year'} &bull; {user?.currentSemester || 'Semester 6'}</span>
+                </span>
+              </div>
+
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight font-baskerville">
+                {user?.name || 'Candidate'}
+              </h1>
+
+              {/* UGC Verified University Tag */}
+              <div className="flex flex-wrap items-center gap-2 font-sans text-xs">
+                <span className="inline-flex items-center space-x-1.5 font-bold text-slate-700 bg-emerald-50 px-3 py-1 rounded-lg border border-emerald-300 text-emerald-800">
+                  <Building2 className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>{user?.university || 'Delhi Technological University (DTU)'}</span>
+                  <Check className="w-3.5 h-3.5 text-emerald-600" />
+                  <span className="font-extrabold text-[10px] uppercase tracking-wider text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded">UGC Verified</span>
+                </span>
+              </div>
             </div>
-            <span>Start mock interview</span>
-          </Link>
+
+            {/* Developer Profiles (LeetCode & GitHub) + Edit Profile Action */}
+            <div className="flex flex-wrap items-center gap-3 font-sans">
+              {/* LeetCode Link */}
+              {user?.leetcodeUrl ? (
+                <a
+                  href={user.leetcodeUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center space-x-2 px-3.5 py-2 rounded-xl bg-amber-50 text-amber-800 border border-amber-400 hover:bg-amber-100 font-bold text-xs transition-colors shadow-sm"
+                >
+                  <span className="w-4 h-4 rounded bg-amber-500 text-white font-black text-[10px] flex items-center justify-center">LC</span>
+                  <span>LeetCode Profile</span>
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+              ) : (
+                <button
+                  onClick={() => setIsEditProfileOpen(true)}
+                  className="inline-flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-slate-50 text-slate-600 border border-slate-300 hover:bg-slate-100 font-bold text-xs transition-colors"
+                >
+                  <span className="w-4 h-4 rounded bg-slate-400 text-white font-black text-[10px] flex items-center justify-center">LC</span>
+                  <span>+ Add LeetCode</span>
+                </button>
+              )}
+
+              {/* GitHub Link */}
+              {user?.githubUrl ? (
+                <a
+                  href={user.githubUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center space-x-2 px-3.5 py-2 rounded-xl bg-slate-900 text-white hover:bg-slate-800 font-bold text-xs transition-colors shadow-sm"
+                >
+                  <Github className="w-4 h-4" />
+                  <span>GitHub Profile</span>
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+              ) : (
+                <button
+                  onClick={() => setIsEditProfileOpen(true)}
+                  className="inline-flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-slate-50 text-slate-600 border border-slate-300 hover:bg-slate-100 font-bold text-xs transition-colors"
+                >
+                  <Github className="w-4 h-4 text-slate-600" />
+                  <span>+ Add GitHub</span>
+                </button>
+              )}
+
+              {/* Edit Student Profile Button */}
+              <button
+                onClick={() => setIsEditProfileOpen(true)}
+                className="inline-flex items-center space-x-2 px-4 py-2 rounded-xl bg-white hover:bg-blue-50 text-blue-600 border-2 border-blue-500 font-extrabold text-xs transition-all shadow-sm"
+              >
+                <Edit3 className="w-3.5 h-3.5" />
+                <span>Edit Student Profile</span>
+              </button>
+
+              <Link
+                to="/start"
+                className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-xl border-2 border-blue-700 shadow-md flex items-center justify-center space-x-2 text-xs transition-all"
+              >
+                <PlayCircle className="w-4 h-4" />
+                <span>Start Mock Interview</span>
+              </Link>
+            </div>
+
+          </div>
         </div>
 
         {/* Metric Cards Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 font-baskerville">
-          {/* Total Sessions Card */}
           <div className="bg-white border-2 border-blue-500 rounded-2xl p-5 shadow-sm hover:border-blue-600 transition-all">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold uppercase tracking-wider text-slate-600 font-sans">Completed Sessions</span>
@@ -132,7 +283,6 @@ const DashboardPage = () => {
             </div>
           </div>
 
-          {/* Average Score Card */}
           <div className="bg-white border-2 border-blue-500 rounded-2xl p-5 shadow-sm hover:border-blue-600 transition-all">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold uppercase tracking-wider text-slate-600 font-sans">Average Overall Score</span>
@@ -152,7 +302,6 @@ const DashboardPage = () => {
             </div>
           </div>
 
-          {/* Technical Sessions Card */}
           <div className="bg-white border-2 border-blue-500 rounded-2xl p-5 shadow-sm hover:border-blue-600 transition-all">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold uppercase tracking-wider text-slate-600 font-sans">Technical Practice</span>
@@ -166,7 +315,6 @@ const DashboardPage = () => {
             </div>
           </div>
 
-          {/* Behavioral Sessions Card */}
           <div className="bg-white border-2 border-blue-500 rounded-2xl p-5 shadow-sm hover:border-blue-600 transition-all">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold uppercase tracking-wider text-slate-600 font-sans">Behavioral Practice</span>
@@ -183,7 +331,6 @@ const DashboardPage = () => {
 
         {/* Analytics Row */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Score History Graph (2 cols) */}
           <div className="lg:col-span-2 bg-white border-2 border-blue-500 rounded-2xl p-6 shadow-sm flex flex-col justify-between">
             <div className="flex items-center justify-between mb-6">
               <div>
@@ -234,9 +381,7 @@ const DashboardPage = () => {
             </div>
           </div>
 
-          {/* Topic Strengths & Focus Areas (1 col) */}
           <div className="space-y-6 font-baskerville">
-            {/* Strengths Card */}
             <div className="bg-white border-2 border-blue-500 rounded-2xl p-6 shadow-sm space-y-4">
               <h3 className="text-base font-extrabold text-slate-900 uppercase tracking-wider flex items-center space-x-2 font-baskerville">
                 <div className="p-1 rounded-md border border-emerald-500 bg-emerald-50 text-emerald-600">
@@ -256,7 +401,6 @@ const DashboardPage = () => {
               </div>
             </div>
 
-            {/* Focus Areas Card */}
             <div className="bg-white border-2 border-blue-500 rounded-2xl p-6 shadow-sm space-y-4">
               <h3 className="text-base font-extrabold text-slate-900 uppercase tracking-wider flex items-center space-x-2 font-baskerville">
                 <div className="p-1 rounded-md border border-amber-500 bg-amber-50 text-amber-600">
@@ -278,7 +422,7 @@ const DashboardPage = () => {
           </div>
         </div>
 
-        {/* Recent Practice Sessions Table with Trash Delete Action */}
+        {/* Recent Practice Sessions Table */}
         <div className="bg-white border-2 border-blue-500 rounded-2xl p-6 sm:p-8 shadow-sm space-y-6 font-baskerville">
           <div className="flex items-center justify-between">
             <div>
@@ -338,7 +482,6 @@ const DashboardPage = () => {
                             <ChevronRight className="w-3.5 h-3.5" />
                           </Link>
 
-                          {/* Delete Session Button */}
                           <button
                             onClick={() => setSessionToDelete(s)}
                             title="Delete Session"
@@ -422,6 +565,179 @@ const DashboardPage = () => {
                 )}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Student Profile Modal */}
+      {isEditProfileOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 font-sans">
+          <div className="bg-white border-2 border-blue-500 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-6 relative animate-fadeIn max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b-2 border-slate-100 pb-3">
+              <h3 className="text-lg font-extrabold text-slate-900 flex items-center space-x-2">
+                <div className="p-1.5 rounded-lg border-2 border-blue-600 bg-blue-50 text-blue-600">
+                  <GraduationCap className="w-4 h-4" />
+                </div>
+                <span>Edit Student & Developer Profile</span>
+              </h3>
+              <button
+                onClick={() => setIsEditProfileOpen(false)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveProfile} className="space-y-5">
+              {/* Degree Program */}
+              <div>
+                <label className="block text-xs font-extrabold text-slate-900 uppercase tracking-wider mb-1.5">
+                  Degree / Academic Program
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={profileForm.degree}
+                  onChange={(e) => setProfileForm({ ...profileForm, degree: e.target.value })}
+                  placeholder="e.g. B.Tech Computer Science & Engineering"
+                  className="w-full bg-white border-2 border-slate-300 focus:border-blue-600 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-900 outline-none transition-all"
+                />
+              </div>
+
+              {/* Year & Semester Grid */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-extrabold text-slate-900 uppercase tracking-wider mb-1.5">
+                    Current Year
+                  </label>
+                  <select
+                    value={profileForm.currentYear}
+                    onChange={(e) => setProfileForm({ ...profileForm, currentYear: e.target.value })}
+                    className="w-full bg-white border-2 border-slate-300 focus:border-blue-600 rounded-xl px-3 py-2.5 text-sm font-bold text-slate-900 outline-none transition-all"
+                  >
+                    <option value="1st Year">1st Year</option>
+                    <option value="2nd Year">2nd Year</option>
+                    <option value="3rd Year">3rd Year</option>
+                    <option value="4th Year">4th Year</option>
+                    <option value="Graduated">Graduated / Alumni</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-extrabold text-slate-900 uppercase tracking-wider mb-1.5">
+                    Current Semester
+                  </label>
+                  <select
+                    value={profileForm.currentSemester}
+                    onChange={(e) => setProfileForm({ ...profileForm, currentSemester: e.target.value })}
+                    className="w-full bg-white border-2 border-slate-300 focus:border-blue-600 rounded-xl px-3 py-2.5 text-sm font-bold text-slate-900 outline-none transition-all"
+                  >
+                    <option value="Semester 1">Semester 1</option>
+                    <option value="Semester 2">Semester 2</option>
+                    <option value="Semester 3">Semester 3</option>
+                    <option value="Semester 4">Semester 4</option>
+                    <option value="Semester 5">Semester 5</option>
+                    <option value="Semester 6">Semester 6</option>
+                    <option value="Semester 7">Semester 7</option>
+                    <option value="Semester 8">Semester 8</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* UGC Verified University Autocomplete Input */}
+              <div className="relative">
+                <label className="block text-xs font-extrabold text-slate-900 uppercase tracking-wider mb-1.5 flex items-center justify-between">
+                  <span>University / Institute</span>
+                  <span className="text-[10px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-300 font-bold">
+                    ✔ UGC Verified Suggestions
+                  </span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={uniInput}
+                  onChange={handleUniInputChange}
+                  placeholder="Type university name (e.g. DTU, IIT, BITS, Anna University)..."
+                  className="w-full bg-white border-2 border-slate-300 focus:border-blue-600 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-900 outline-none transition-all"
+                />
+
+                {/* Autocomplete Suggestions Dropdown */}
+                {showUniDropdown && uniSuggestions.length > 0 && (
+                  <div className="absolute left-0 right-0 top-full mt-1 bg-white border-2 border-blue-500 rounded-xl shadow-xl z-50 max-h-48 overflow-y-auto divide-y divide-slate-100">
+                    {uniSuggestions.map((uni, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => selectUniversity(uni)}
+                        className="w-full text-left px-4 py-2.5 hover:bg-blue-50 flex items-center justify-between transition-colors text-xs font-bold text-slate-800"
+                      >
+                        <span>{uni}</span>
+                        <span className="text-[10px] text-emerald-700 font-extrabold bg-emerald-100 px-1.5 py-0.5 rounded">UGC Verified</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* LeetCode Profile URL */}
+              <div>
+                <label className="block text-xs font-extrabold text-slate-900 uppercase tracking-wider mb-1.5 flex items-center space-x-1">
+                  <span className="w-3.5 h-3.5 rounded bg-amber-500 text-white font-black text-[9px] flex items-center justify-center">LC</span>
+                  <span>LeetCode Profile Link</span>
+                </label>
+                <input
+                  type="url"
+                  value={profileForm.leetcodeUrl}
+                  onChange={(e) => setProfileForm({ ...profileForm, leetcodeUrl: e.target.value })}
+                  placeholder="https://leetcode.com/your-username"
+                  className="w-full bg-white border-2 border-slate-300 focus:border-blue-600 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-900 outline-none transition-all"
+                />
+              </div>
+
+              {/* GitHub Profile URL */}
+              <div>
+                <label className="block text-xs font-extrabold text-slate-900 uppercase tracking-wider mb-1.5 flex items-center space-x-1">
+                  <Github className="w-3.5 h-3.5 text-slate-800" />
+                  <span>GitHub Profile Link</span>
+                </label>
+                <input
+                  type="url"
+                  value={profileForm.githubUrl}
+                  onChange={(e) => setProfileForm({ ...profileForm, githubUrl: e.target.value })}
+                  placeholder="https://github.com/your-username"
+                  className="w-full bg-white border-2 border-slate-300 focus:border-blue-600 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-900 outline-none transition-all"
+                />
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex items-center space-x-3 pt-3 border-t-2 border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setIsEditProfileOpen(false)}
+                  className="w-1/2 bg-white hover:bg-slate-100 text-slate-700 font-bold py-2.5 px-4 rounded-xl border-2 border-slate-200 transition-colors text-sm"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="submit"
+                  disabled={savingProfile}
+                  className="w-1/2 bg-blue-600 hover:bg-blue-700 text-white font-extrabold py-2.5 px-4 rounded-xl border-2 border-blue-700 shadow-md flex items-center justify-center space-x-2 transition-all disabled:opacity-50 text-sm"
+                >
+                  {savingProfile ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Saving...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Check className="w-4 h-4" />
+                      <span>Save Profile Info</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

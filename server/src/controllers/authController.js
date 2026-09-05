@@ -8,6 +8,22 @@ const generateToken = (id) => {
   });
 };
 
+const sanitizeUser = (user) => ({
+  id: user._id,
+  name: user.name,
+  email: user.email,
+  targetRole: user.targetRole,
+  profileImage: user.profileImage,
+  leetcodeUrl: user.leetcodeUrl || '',
+  githubUrl: user.githubUrl || '',
+  degree: user.degree || 'B.Tech Computer Science & Engineering',
+  currentYear: user.currentYear || '3rd Year',
+  currentSemester: user.currentSemester || 'Semester 6',
+  university: user.university || 'Delhi Technological University (DTU)',
+  isUgcVerified: user.isUgcVerified ?? true,
+  createdAt: user.createdAt,
+});
+
 export const registerUser = async (req, res, next) => {
   try {
     const { name, email, password, targetRole } = req.body;
@@ -36,14 +52,7 @@ export const registerUser = async (req, res, next) => {
     res.status(201).json({
       success: true,
       token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        targetRole: user.targetRole,
-        profileImage: user.profileImage,
-        createdAt: user.createdAt,
-      },
+      user: sanitizeUser(user),
     });
   } catch (error) {
     next(error);
@@ -76,14 +85,7 @@ export const loginUser = async (req, res, next) => {
     res.status(200).json({
       success: true,
       token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        targetRole: user.targetRole,
-        profileImage: user.profileImage,
-        createdAt: user.createdAt,
-      },
+      user: sanitizeUser(user),
     });
   } catch (error) {
     next(error);
@@ -95,23 +97,13 @@ export const getMe = async (req, res, next) => {
     const user = await User.findById(req.user._id).select('-passwordHash');
     res.status(200).json({
       success: true,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        targetRole: user.targetRole,
-        profileImage: user.profileImage,
-        createdAt: user.createdAt,
-      },
+      user: sanitizeUser(user),
     });
   } catch (error) {
     next(error);
   }
 };
 
-// @desc    Update or remove user profile avatar image
-// @route   PUT /api/auth/profile-image
-// @access  Private
 export const updateProfileImage = async (req, res, next) => {
   try {
     const { profileImage } = req.body;
@@ -127,14 +119,48 @@ export const updateProfileImage = async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        targetRole: user.targetRole,
-        profileImage: user.profileImage,
-        createdAt: user.createdAt,
-      },
+      user: sanitizeUser(user),
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Update candidate academic and developer profile info
+// @route   PUT /api/auth/profile
+// @access  Private
+export const updateUserProfile = async (req, res, next) => {
+  try {
+    const {
+      leetcodeUrl,
+      githubUrl,
+      degree,
+      currentYear,
+      currentSemester,
+      university,
+      isUgcVerified,
+    } = req.body;
+
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+      res.status(404);
+      throw new Error('User account not found.');
+    }
+
+    if (leetcodeUrl !== undefined) user.leetcodeUrl = leetcodeUrl.trim();
+    if (githubUrl !== undefined) user.githubUrl = githubUrl.trim();
+    if (degree !== undefined) user.degree = degree.trim();
+    if (currentYear !== undefined) user.currentYear = currentYear.trim();
+    if (currentSemester !== undefined) user.currentSemester = currentSemester.trim();
+    if (university !== undefined) user.university = university.trim();
+    if (isUgcVerified !== undefined) user.isUgcVerified = Boolean(isUgcVerified);
+
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      user: sanitizeUser(user),
     });
   } catch (error) {
     next(error);

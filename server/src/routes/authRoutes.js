@@ -4,6 +4,7 @@ import {
   loginUser,
   getMe,
   updateProfileImage,
+  updateUserProfile,
   forgotPassword,
   resetPassword,
 } from '../controllers/authController.js';
@@ -16,6 +17,7 @@ router.post('/login', loginUser);
 router.post('/forgot-password', forgotPassword);
 router.post('/reset-password', resetPassword);
 router.put('/profile-image', protect, updateProfileImage);
+router.put('/profile', protect, updateUserProfile);
 router.get('/me', protect, getMe);
 
 export default router;

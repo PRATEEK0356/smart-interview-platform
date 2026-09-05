@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { loginApi, signupApi, fetchMeApi, updateProfileImageApi } from '../../api/authApi';
+import { loginApi, signupApi, fetchMeApi, updateProfileImageApi, updateUserProfileApi } from '../../api/authApi';
 
 const storedToken = localStorage.getItem('token') || null;
 const storedUser = localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')) : null;
@@ -56,6 +56,19 @@ export const updateProfileImage = createAsyncThunk(
       return data.user;
     } catch (error) {
       return rejectWithValue(error.response?.data?.error || 'Failed to update profile image.');
+    }
+  }
+);
+
+export const updateUserProfile = createAsyncThunk(
+  'auth/updateUserProfile',
+  async (profileData, { rejectWithValue }) => {
+    try {
+      const data = await updateUserProfileApi(profileData);
+      localStorage.setItem('user', JSON.stringify(data.user));
+      return data.user;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.error || 'Failed to update student profile.');
     }
   }
 );
@@ -126,6 +139,10 @@ const authSlice = createSlice({
       })
       // Update Profile Image
       .addCase(updateProfileImage.fulfilled, (state, action) => {
+        state.user = action.payload;
+      })
+      // Update User Profile
+      .addCase(updateUserProfile.fulfilled, (state, action) => {
         state.user = action.payload;
       });
   },
