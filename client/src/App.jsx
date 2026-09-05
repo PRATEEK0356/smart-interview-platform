@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { checkAuth } from './features/auth/authSlice';
 import Navbar from './components/Navbar';
 import ProtectedRoute from './components/ProtectedRoute';
+import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
 import DashboardPage from './pages/DashboardPage';
@@ -13,7 +14,7 @@ import ReportPage from './pages/ReportPage';
 
 function App() {
   const dispatch = useDispatch();
-  const { token } = useSelector((state) => state.auth);
+  const { token, isAuthenticated } = useSelector((state) => state.auth);
 
   useEffect(() => {
     if (token) {
@@ -22,15 +23,19 @@ function App() {
   }, [dispatch, token]);
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col">
+    <div className="min-h-screen bg-slate-50 flex flex-col">
       <Navbar />
       <main className="flex-1">
         <Routes>
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          {/* Public Landing Page */}
+          <Route
+            path="/"
+            element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <LandingPage />}
+          />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
 
-          {/* Protected Routes */}
+          {/* Protected Candidate Routes */}
           <Route element={<ProtectedRoute />}>
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/start" element={<StartInterviewPage />} />
@@ -39,7 +44,7 @@ function App() {
           </Route>
 
           {/* Catch-all fallback */}
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
     </div>
