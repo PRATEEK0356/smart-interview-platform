@@ -1,9 +1,6 @@
 import { InterviewSession } from '../models/InterviewSession.js';
-import { fetchGeneratedQuestions, fetchAnswerEvaluation } from '../services/aiServiceClient.js';
+import { fetchGeneratedQuestions, fetchAnswerEvaluation, fetchSessionFeedbackReport } from '../services/aiServiceClient.js';
 
-// @desc    Start a new interview session (generates questions via AI service)
-// @route   POST /api/sessions
-// @access  Private
 export const createSession = async (req, res, next) => {
   try {
     const { role, type, questionCount, language, difficulty } = req.body;
@@ -13,7 +10,6 @@ export const createSession = async (req, res, next) => {
     const targetLanguage = language || 'Java';
     const targetDifficulty = difficulty || 'Intermediate';
 
-    // Fetch AI-generated questions tailored by role, type, language & difficulty
     const generatedQuestions = await fetchGeneratedQuestions(
       targetRole,
       interviewType,
@@ -59,9 +55,6 @@ export const createSession = async (req, res, next) => {
   }
 };
 
-// @desc    Get session details by ID
-// @route   GET /api/sessions/:id
-// @access  Private
 export const getSessionById = async (req, res, next) => {
   try {
     const session = await InterviewSession.findById(req.params.id);
@@ -85,9 +78,6 @@ export const getSessionById = async (req, res, next) => {
   }
 };
 
-// @desc    Submit answer for a specific question & evaluate via AI service
-// @route   PATCH /api/sessions/:id/answer
-// @access  Private
 export const submitAnswer = async (req, res, next) => {
   try {
     const { questionIndex, answerText, visualMetrics } = req.body;
@@ -114,8 +104,6 @@ export const submitAnswer = async (req, res, next) => {
     }
 
     const question = session.questions[questionIndex];
-
-    // Evaluate answer via AI Microservice
     const evalResult = await fetchAnswerEvaluation(question.questionText, answerText);
 
     question.answerText = answerText.trim();
@@ -146,7 +134,7 @@ export const submitAnswer = async (req, res, next) => {
   }
 };
 
-// @desc    Complete interview session & compute overall score
+// @desc    Complete interview session, compute overall score, & generate AI mentorship feedback report
 // @route   PATCH /api/sessions/:id/complete
 // @access  Private
 export const completeSession = async (req, res, next) => {
@@ -174,6 +162,17 @@ export const completeSession = async (req, res, next) => {
     session.overallScore = overallScore;
     session.completedAt = new Date();
 
+    // Generate comprehensive AI mentorship report
+    const feedbackReport = await fetchSessionFeedbackReport({
+      role: session.role,
+      language: session.language,
+      difficulty: session.difficulty,
+      type: session.type,
+      overallScore,
+      questions: session.questions
+    });
+
+    session.aiFeedbackReport = feedbackReport;
     await session.save();
 
     res.status(200).json({
@@ -185,9 +184,6 @@ export const completeSession = async (req, res, next) => {
   }
 };
 
-// @desc    List all past sessions for current user
-// @route   GET /api/sessions
-// @access  Private
 export const getUserSessions = async (req, res, next) => {
   try {
     const sessions = await InterviewSession.find({ userId: req.user._id })

@@ -80,6 +80,12 @@ const interviewSessionSchema = new mongoose.Schema(
       max: 100,
       default: 0,
     },
+    aiFeedbackReport: {
+      executiveSummary: { type: String, default: '' },
+      strengths: [{ type: String }],
+      areasToFocus: [{ type: String }],
+      actionPlan: [{ type: String }],
+    },
     startedAt: {
       type: Date,
       default: Date.now,

@@ -11,6 +11,10 @@ import {
   UserCheck,
   Code2,
   Sparkles,
+  CheckCircle2,
+  Target,
+  Rocket,
+  ShieldCheck,
 } from 'lucide-react';
 
 const ReportPage = () => {
@@ -40,7 +44,7 @@ const ReportPage = () => {
     return (
       <div className="min-h-[70vh] flex flex-col items-center justify-center space-y-4 bg-slate-50 font-baskerville">
         <Loader2 className="w-10 h-10 text-blue-600 animate-spin" />
-        <p className="text-slate-600 font-bold text-sm">Compiling mentor feedback report...</p>
+        <p className="text-slate-600 font-bold text-sm">Compiling AI post-interview performance report...</p>
       </div>
     );
   }
@@ -61,6 +65,7 @@ const ReportPage = () => {
   }
 
   const score = session.overallScore || 0;
+  const aiReport = session.aiFeedbackReport || {};
 
   return (
     <div className="bg-slate-50 min-h-screen py-10 font-baskerville">
@@ -82,14 +87,14 @@ const ReportPage = () => {
           </Link>
         </div>
 
-        {/* Overview Mentor Banner Card */}
+        {/* Overview Banner Card */}
         <div className="bg-white border-2 border-blue-500 rounded-2xl p-6 sm:p-8 shadow-sm font-baskerville">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div className="space-y-2">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="inline-flex items-center space-x-2 px-3 py-1 rounded-lg text-xs font-extrabold bg-blue-50 text-blue-700 border border-blue-200 font-sans">
                   <Sparkles className="w-3.5 h-3.5 text-blue-600" />
-                  <span>Mentor Feedback Notes</span>
+                  <span>AI Mentor Evaluation Report</span>
                 </span>
                 {session.language && (
                   <span className="inline-flex items-center space-x-1 px-3 py-1 rounded-lg text-xs font-bold bg-blue-600 text-white font-sans">
@@ -109,7 +114,7 @@ const ReportPage = () => {
                   <span>{new Date(session.completedAt || session.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
                 </span>
                 <span>&bull;</span>
-                <span>{session.questions.length} Questions Reviewed</span>
+                <span>{session.questions.length} Questions Evaluated</span>
               </div>
             </div>
 
@@ -128,11 +133,97 @@ const ReportPage = () => {
           </div>
         </div>
 
-        {/* Detailed Mentor Question Breakdown */}
+        {/* AI Mentor Guidance & Action Plan Card */}
+        <div className="bg-white border-2 border-blue-500 rounded-2xl p-6 sm:p-8 shadow-sm space-y-6 font-baskerville">
+          <div className="flex items-center space-x-3 border-b-2 border-slate-100 pb-4 font-sans">
+            <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold border border-blue-700 shadow-sm">
+              <ShieldCheck className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-xl font-black text-slate-900 font-baskerville">AI Performance Insights & Action Plan</h2>
+              <p className="text-xs text-slate-500 font-medium font-sans">Comprehensive evaluation of performance, strong command, and areas to focus</p>
+            </div>
+          </div>
+
+          {/* Executive Summary */}
+          {aiReport.executiveSummary && (
+            <div className="bg-blue-50/70 p-5 rounded-xl border border-blue-200 space-y-1">
+              <h3 className="text-xs font-extrabold uppercase tracking-wider text-blue-800 font-sans">Executive Readiness Summary</h3>
+              <p className="text-base text-slate-900 font-medium leading-relaxed font-baskerville">
+                {aiReport.executiveSummary}
+              </p>
+            </div>
+          )}
+
+          {/* Grid: Strong Command vs Areas to Focus More */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 font-baskerville">
+            {/* Where You Demonstrated Strong Command */}
+            <div className="bg-emerald-50/50 p-5 rounded-xl border-2 border-emerald-300 space-y-3">
+              <h3 className="text-sm font-extrabold text-emerald-900 uppercase tracking-wider flex items-center space-x-2 font-baskerville">
+                <div className="p-1 rounded-md bg-emerald-600 text-white">
+                  <CheckCircle2 className="w-4 h-4" />
+                </div>
+                <span>Where You Have Strong Command</span>
+              </h3>
+              <ul className="space-y-2">
+                {aiReport.strengths?.map((item, i) => (
+                  <li key={i} className="text-sm text-slate-800 font-medium flex items-start space-x-2 font-baskerville">
+                    <span className="text-emerald-600 font-bold">•</span>
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Where You Have to Focus More */}
+            <div className="bg-amber-50/50 p-5 rounded-xl border-2 border-amber-300 space-y-3">
+              <h3 className="text-sm font-extrabold text-amber-900 uppercase tracking-wider flex items-center space-x-2 font-baskerville">
+                <div className="p-1 rounded-md bg-amber-600 text-white">
+                  <Target className="w-4 h-4" />
+                </div>
+                <span>Where You Have to Focus More</span>
+              </h3>
+              <ul className="space-y-2">
+                {aiReport.areasToFocus?.map((item, i) => (
+                  <li key={i} className="text-sm text-slate-800 font-medium flex items-start space-x-2 font-baskerville">
+                    <span className="text-amber-600 font-bold">•</span>
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+
+          {/* Recommended Action Plan to Build Command */}
+          {aiReport.actionPlan && aiReport.actionPlan.length > 0 && (
+            <div className="bg-slate-50 p-6 rounded-xl border-2 border-blue-200 space-y-4 font-baskerville">
+              <h3 className="text-base font-extrabold text-slate-900 uppercase tracking-wider flex items-center space-x-2 font-baskerville">
+                <div className="p-1 rounded-md bg-blue-600 text-white">
+                  <Rocket className="w-4 h-4" />
+                </div>
+                <span>Recommended Action Plan to Build Strong Command</span>
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {aiReport.actionPlan.map((step, idx) => (
+                  <div key={idx} className="bg-white p-4 rounded-xl border border-slate-300 space-y-2 shadow-sm">
+                    <span className="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-black font-sans">
+                      {idx + 1}
+                    </span>
+                    <p className="text-xs text-slate-800 font-medium leading-relaxed font-baskerville">
+                      {step}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Detailed Question-by-Question Critique */}
         <div className="space-y-6 font-baskerville">
           <h2 className="text-xl font-black text-slate-900 flex items-center space-x-2 font-baskerville">
             <FileText className="w-5 h-5 text-blue-600" />
-            <span>Question-by-Question Mentor Critique</span>
+            <span>Question-by-Question Critique</span>
           </h2>
 
           {session.questions.map((q, idx) => (

@@ -21,7 +21,6 @@ export const fetchGeneratedQuestions = async (role, type, count = 3, language = 
     throw new Error('Invalid format returned from AI Service');
   } catch (error) {
     console.error('[AI Service Client] Question generation error:', error.message);
-    // Graceful fallback if AI service is temporarily offline
     return [
       {
         questionText: `Explain core ${language} ${difficulty}-level concepts and architecture trade-offs in your target projects.`,
@@ -60,6 +59,43 @@ export const fetchAnswerEvaluation = async (question, answer) => {
       sentiment: 'Objective & Technical',
       structuralScore: 70,
       qualitativeAnalysis: 'Response contains foundational structure.'
+    };
+  }
+};
+
+export const fetchSessionFeedbackReport = async (sessionData) => {
+  try {
+    const response = await aiClient.post('/generate-session-feedback', {
+      role: sessionData.role,
+      language: sessionData.language || 'Java',
+      difficulty: sessionData.difficulty || 'Intermediate',
+      type: sessionData.type || 'technical',
+      overallScore: sessionData.overallScore || 0,
+      questions: sessionData.questions.map(q => ({
+        questionText: q.questionText,
+        answerText: q.answerText,
+        score: q.score || 0,
+        feedback: q.feedback || ''
+      }))
+    });
+    return response.data;
+  } catch (error) {
+    console.error('[AI Service Client] Session feedback generation error:', error.message);
+    return {
+      executiveSummary: `Solid foundation demonstrated across core technical requirements for ${sessionData.role}.`,
+      strengths: [
+        `Strong grasp of fundamental ${sessionData.language || 'language'} syntax and structure.`,
+        'Direct and articulate answer delivery.'
+      ],
+      areasToFocus: [
+        `Elaborate deeper on memory management and internal concurrency mechanics in ${sessionData.language || 'language'}.`,
+        'Quantify performance metrics and trade-offs in real-world deployments.'
+      ],
+      actionPlan: [
+        `Review advanced ${sessionData.language || 'language'} architecture patterns.`,
+        'Practice articulating system trade-offs aloud using the Speech-to-Text mic feature.',
+        'Schedule a follow-up mock session to build instant technical recall.'
+      ]
     };
   }
 };
