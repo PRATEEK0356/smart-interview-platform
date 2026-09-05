@@ -6,15 +6,10 @@ import Navbar from './components/Navbar';
 import ProtectedRoute from './components/ProtectedRoute';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
+import DashboardPage from './pages/DashboardPage';
 import StartInterviewPage from './pages/StartInterviewPage';
 import InterviewPage from './pages/InterviewPage';
-
-const PlaceholderPage = ({ title }) => (
-  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 text-center">
-    <h1 className="text-3xl font-bold text-white mb-4">{title}</h1>
-    <p className="text-slate-400">Loading module...</p>
-  </div>
-);
+import ReportPage from './pages/ReportPage';
 
 function App() {
   const dispatch = useDispatch();
@@ -37,10 +32,10 @@ function App() {
 
           {/* Protected Routes */}
           <Route element={<ProtectedRoute />}>
-            <Route path="/dashboard" element={<PlaceholderPage title="Dashboard" />} />
+            <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/start" element={<StartInterviewPage />} />
             <Route path="/interview/:id" element={<InterviewPage />} />
-            <Route path="/report/:id" element={<PlaceholderPage title="Session Report" />} />
+            <Route path="/report/:id" element={<ReportPage />} />
           </Route>
 
           {/* Catch-all fallback */}
