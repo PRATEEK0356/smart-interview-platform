@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Camera, CameraOff, UserCheck, AlertTriangle, UserX, ShieldCheck, Eye } from 'lucide-react';
+import { Camera, CameraOff, UserCheck, UserX, ShieldCheck } from 'lucide-react';
 
 const WebcamMonitor = ({ onMetricsUpdate }) => {
   const videoRef = useRef(null);
@@ -71,7 +71,6 @@ const WebcamMonitor = ({ onMetricsUpdate }) => {
       const frameData = ctx.getImageData(0, 0, canvas.width, canvas.height);
       const data = frameData.data;
 
-      // Analyze frame brightness & skin-tone luminance distribution
       let totalLuminance = 0;
       let skinPixels = 0;
 
@@ -83,7 +82,6 @@ const WebcamMonitor = ({ onMetricsUpdate }) => {
         const lum = 0.299 * r + 0.587 * g + 0.114 * b;
         totalLuminance += lum;
 
-        // Skin-tone YCbCr / RGB heuristic bounds
         if (r > 60 && g > 40 && b > 20 && r > g && r > b && Math.abs(r - g) > 15) {
           skinPixels++;
         }
@@ -102,7 +100,7 @@ const WebcamMonitor = ({ onMetricsUpdate }) => {
         detected = false;
         score = 30;
       } else if (skinRatio < 0.12) {
-        newStatus = 'Gaze Off-Center / Distance Shift';
+        newStatus = 'Gaze Shifted';
         detected = true;
         score = 70;
       } else {
@@ -132,23 +130,25 @@ const WebcamMonitor = ({ onMetricsUpdate }) => {
   };
 
   return (
-    <div className="bg-slate-900/90 border border-slate-800/80 rounded-2xl p-4 shadow-2xl backdrop-blur-xl space-y-3 relative overflow-hidden">
+    <div className="bg-white border-2 border-blue-500 rounded-2xl p-4 shadow-sm space-y-3 relative overflow-hidden">
       {/* Offscreen analysis canvas */}
       <canvas ref={canvasRef} className="hidden" />
 
       {/* Header bar */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2">
-          <ShieldCheck className="w-4 h-4 text-blue-400" />
-          <span className="text-xs font-bold text-white uppercase tracking-wider">AI Video Proctor</span>
+          <div className="p-1 rounded-lg border-2 border-blue-600 bg-blue-50 text-blue-600">
+            <ShieldCheck className="w-4 h-4" />
+          </div>
+          <span className="text-xs font-extrabold text-slate-900 uppercase tracking-wider">AI Video Proctor</span>
         </div>
 
         <button
           onClick={toggleCamera}
-          className={`p-1.5 rounded-lg text-xs font-semibold flex items-center space-x-1.5 transition-colors ${
+          className={`p-1.5 rounded-xl text-xs font-extrabold flex items-center space-x-1.5 border-2 transition-all ${
             isCameraOn
-              ? 'bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white'
-              : 'bg-blue-600 text-white hover:bg-blue-500'
+              ? 'bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200'
+              : 'bg-blue-600 text-white border-blue-700 hover:bg-blue-700'
           }`}
         >
           {isCameraOn ? (
@@ -166,7 +166,7 @@ const WebcamMonitor = ({ onMetricsUpdate }) => {
       </div>
 
       {/* Video Container */}
-      <div className="relative aspect-video bg-slate-950 rounded-xl overflow-hidden border border-slate-800/80 flex items-center justify-center group">
+      <div className="relative aspect-video bg-slate-950 rounded-xl overflow-hidden border-2 border-blue-500 flex items-center justify-center">
         {isCameraOn && !permissionError ? (
           <video
             ref={videoRef}
@@ -177,7 +177,7 @@ const WebcamMonitor = ({ onMetricsUpdate }) => {
           />
         ) : (
           <div className="flex flex-col items-center justify-center p-6 text-center space-y-2">
-            <div className="w-12 h-12 rounded-full bg-slate-900 flex items-center justify-center border border-slate-800 text-slate-500">
+            <div className="w-12 h-12 rounded-full bg-slate-900 flex items-center justify-center border-2 border-slate-700 text-slate-400">
               <CameraOff className="w-6 h-6" />
             </div>
             <p className="text-xs text-slate-400 font-medium">
@@ -190,18 +190,18 @@ const WebcamMonitor = ({ onMetricsUpdate }) => {
         {isCameraOn && !permissionError && (
           <div className="absolute inset-x-3 top-3 flex items-center justify-between pointer-events-none">
             {/* Live REC indicator */}
-            <div className="flex items-center space-x-2 bg-slate-950/80 backdrop-blur-md px-2.5 py-1 rounded-full border border-slate-800 text-[10px] font-mono text-slate-300">
+            <div className="flex items-center space-x-2 bg-slate-950/90 backdrop-blur-md px-2.5 py-1 rounded-full border border-blue-400 text-[10px] font-mono font-bold text-white">
               <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
               <span>LIVE RECOG</span>
             </div>
 
             {/* Status indicator */}
-            <div className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold backdrop-blur-md border ${
+            <div className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-full text-[10px] font-extrabold backdrop-blur-md border ${
               faceStatus.faceDetected && faceStatus.score >= 80
-                ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+                ? 'bg-emerald-500/90 text-white border-emerald-400'
                 : faceStatus.faceDetected
-                ? 'bg-amber-500/20 text-amber-400 border-amber-500/30'
-                : 'bg-rose-500/20 text-rose-400 border-rose-500/30'
+                ? 'bg-amber-500/90 text-white border-amber-400'
+                : 'bg-rose-500/90 text-white border-rose-400'
             }`}>
               {faceStatus.faceDetected ? (
                 <UserCheck className="w-3 h-3 flex-shrink-0" />
@@ -217,13 +217,13 @@ const WebcamMonitor = ({ onMetricsUpdate }) => {
       {/* Metric Footer */}
       {isCameraOn && !permissionError && (
         <div className="grid grid-cols-2 gap-2 text-center text-xs">
-          <div className="bg-slate-950/60 p-2 rounded-lg border border-slate-800/80">
-            <span className="text-[10px] uppercase font-semibold text-slate-500 block">Visual Engagement</span>
-            <span className="font-extrabold text-white font-mono">{faceStatus.score}%</span>
+          <div className="bg-blue-50 p-2 rounded-lg border-2 border-blue-500">
+            <span className="text-[10px] uppercase font-extrabold text-slate-600 block">Visual Engagement</span>
+            <span className="font-black text-blue-700 font-mono text-sm">{faceStatus.score}%</span>
           </div>
-          <div className="bg-slate-950/60 p-2 rounded-lg border border-slate-800/80">
-            <span className="text-[10px] uppercase font-semibold text-slate-500 block">Posture & Focus</span>
-            <span className="font-extrabold text-emerald-400 font-mono">Attentive</span>
+          <div className="bg-blue-50 p-2 rounded-lg border-2 border-blue-500">
+            <span className="text-[10px] uppercase font-extrabold text-slate-600 block">Posture & Focus</span>
+            <span className="font-black text-emerald-700 font-mono text-sm">Attentive</span>
           </div>
         </div>
       )}
