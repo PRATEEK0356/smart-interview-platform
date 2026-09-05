@@ -134,9 +134,6 @@ export const submitAnswer = async (req, res, next) => {
   }
 };
 
-// @desc    Complete interview session, compute overall score, & generate AI mentorship feedback report
-// @route   PATCH /api/sessions/:id/complete
-// @access  Private
 export const completeSession = async (req, res, next) => {
   try {
     const session = await InterviewSession.findById(req.params.id);
@@ -162,7 +159,6 @@ export const completeSession = async (req, res, next) => {
     session.overallScore = overallScore;
     session.completedAt = new Date();
 
-    // Generate comprehensive AI mentorship report
     const feedbackReport = await fetchSessionFeedbackReport({
       role: session.role,
       language: session.language,
@@ -178,6 +174,34 @@ export const completeSession = async (req, res, next) => {
     res.status(200).json({
       success: true,
       session,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Delete a past interview session
+// @route   DELETE /api/sessions/:id
+// @access  Private
+export const deleteSession = async (req, res, next) => {
+  try {
+    const session = await InterviewSession.findById(req.params.id);
+
+    if (!session) {
+      res.status(404);
+      throw new Error('Interview session not found.');
+    }
+
+    if (session.userId.toString() !== req.user._id.toString()) {
+      res.status(403);
+      throw new Error('Not authorized to delete this session.');
+    }
+
+    await InterviewSession.findByIdAndDelete(req.params.id);
+
+    res.status(200).json({
+      success: true,
+      message: 'Interview session deleted successfully.',
     });
   } catch (error) {
     next(error);

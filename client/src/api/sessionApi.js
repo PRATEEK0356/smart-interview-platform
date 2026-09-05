@@ -10,13 +10,18 @@ export const getSessionByIdApi = async (sessionId) => {
   return response.data;
 };
 
-export const submitAnswerApi = async (sessionId, payload) => {
-  const response = await axiosClient.patch(`/sessions/${sessionId}/answer`, payload);
+export const submitAnswerApi = async (sessionId, answerData) => {
+  const response = await axiosClient.patch(`/sessions/${sessionId}/answer`, answerData);
   return response.data;
 };
 
 export const completeSessionApi = async (sessionId) => {
   const response = await axiosClient.patch(`/sessions/${sessionId}/complete`);
+  return response.data;
+};
+
+export const deleteSessionApi = async (sessionId) => {
+  const response = await axiosClient.delete(`/sessions/${sessionId}`);
   return response.data;
 };
 

@@ -4,6 +4,7 @@ import {
   getSessionById,
   submitAnswer,
   completeSession,
+  deleteSession,
   getUserSessions,
 } from '../controllers/sessionController.js';
 import { protect } from '../middleware/authMiddleware.js';
@@ -17,5 +18,6 @@ router.get('/', getUserSessions);
 router.get('/:id', getSessionById);
 router.patch('/:id/answer', submitAnswer);
 router.patch('/:id/complete', completeSession);
+router.delete('/:id', deleteSession);
 
 export default router;
