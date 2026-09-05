@@ -9,31 +9,38 @@ import { errorHandler } from './middleware/errorHandler.js';
 
 const app = express();
 
-// Connect Database
-connectDB();
+// Middleware - 10MB limit for base64 JPG profile photos
+app.use(cors());
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
-// Middleware
-app.use(cors({
-  origin: true,
-  credentials: true
-}));
-app.use(express.json());
-
-// Routes
+// Health Check Endpoint
 app.get('/health', (req, res) => {
-  res.status(200).json({ status: 'healthy', timestamp: new Date().toISOString() });
+  res.status(200).json({
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+  });
 });
 
+// API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/sessions', sessionRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 
-// Centralized error handler
+// Error Handling Middleware
 app.use(errorHandler);
 
-const PORT = config.port;
-app.listen(PORT, () => {
-  console.log(`Server running in ${config.nodeEnv} mode on port ${PORT}`);
-});
+// Connect DB and Start Server
+const startServer = async () => {
+  try {
+    await connectDB();
+    app.listen(config.port, () => {
+      console.log(`[Express Server] Running in ${config.nodeEnv} mode on port ${config.port}`);
+    });
+  } catch (error) {
+    console.error('[Express Server] Startup failed:', error.message);
+    process.exit(1);
+  }
+};
 
-export default app;
+startServer();

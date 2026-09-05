@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { logout, updateProfileImage } from '../features/auth/authSlice';
-import { Sparkles, LayoutDashboard, PlayCircle, LogOut, Camera, Trash2, X, User } from 'lucide-react';
+import { Sparkles, LayoutDashboard, PlayCircle, LogOut, Camera, Trash2, X, User, Loader2 } from 'lucide-react';
 
 const Navbar = () => {
   const dispatch = useDispatch();
@@ -13,39 +13,89 @@ const Navbar = () => {
   const { user, isAuthenticated } = useSelector((state) => state.auth);
   const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState(null);
 
   const handleLogout = () => {
     dispatch(logout());
     navigate('/login');
   };
 
-  const handleFileChange = (e) => {
+  // Helper to downscale and compress any selected JPG/PNG/WEBP to 300x300 avatar JPEG
+  const compressImage = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target.result;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const maxDim = 300;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > maxDim) {
+              height = Math.round((height * maxDim) / width);
+              width = maxDim;
+            }
+          } else {
+            if (height > maxDim) {
+              width = Math.round((width * maxDim) / height);
+              height = maxDim;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+
+          // Convert to clean JPEG format with 0.85 quality
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+          resolve(dataUrl);
+        };
+        img.onerror = (err) => reject(err);
+      };
+      reader.onerror = (err) => reject(err);
+    });
+  };
+
+  const handleFileChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    if (!file.type.startsWith('image/')) {
-      alert('Please select an image file (PNG, JPG, JPEG, WEBP).');
+    setUploadError(null);
+
+    // Accept jpg, jpeg, png, webp, and general image formats
+    const isJpgOrImage = file.type.startsWith('image/') || /\.(jpg|jpeg|png|webp|gif)$/i.test(file.name);
+    if (!isJpgOrImage) {
+      setUploadError('Please select a JPG, JPEG, PNG, or WEBP image file.');
       return;
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      alert('Image file size must be under 5MB.');
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onloadend = async () => {
-      const base64Data = reader.result;
+    try {
       setIsUploading(true);
-      await dispatch(updateProfileImage({ profileImage: base64Data }));
+      const compressedJpgBase64 = await compressImage(file);
+      const actionResult = await dispatch(updateProfileImage({ profileImage: compressedJpgBase64 }));
+
+      if (updateProfileImage.fulfilled.match(actionResult)) {
+        setIsAvatarModalOpen(false);
+      } else {
+        setUploadError(actionResult.payload || 'Failed to upload JPG image.');
+      }
+    } catch (err) {
+      console.error('Image compression error:', err);
+      setUploadError('Failed to process JPG image file.');
+    } finally {
       setIsUploading(false);
-      setIsAvatarModalOpen(false);
-    };
-    reader.readAsDataURL(file);
+    }
   };
 
   const handleRemovePhoto = async () => {
     setIsUploading(true);
+    setUploadError(null);
     await dispatch(updateProfileImage({ profileImage: null }));
     setIsUploading(false);
     setIsAvatarModalOpen(false);
@@ -53,14 +103,13 @@ const Navbar = () => {
 
   if (!isAuthenticated) return null;
 
-  // Fallback initial
   const userInitial = user?.name ? user.name.charAt(0).toUpperCase() : 'U';
 
   return (
     <>
       <header className="sticky top-0 z-50 bg-white border-b-2 border-blue-500 shadow-sm font-sans">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          {/* Brand Logo with Blue Border */}
+          {/* Brand Logo */}
           <Link to="/dashboard" className="flex items-center space-x-3 group">
             <div className="w-10 h-10 rounded-xl bg-blue-50 border-2 border-blue-600 flex items-center justify-center text-blue-600 shadow-sm group-hover:bg-blue-600 group-hover:text-white transition-colors">
               <Sparkles className="w-5 h-5" />
@@ -71,7 +120,7 @@ const Navbar = () => {
             </div>
           </Link>
 
-          {/* Navigation Links & Controls */}
+          {/* Navigation Links */}
           <nav className="flex items-center space-x-3">
             <Link
               to="/dashboard"
@@ -101,11 +150,13 @@ const Navbar = () => {
               <span>New Interview</span>
             </Link>
 
-            {/* Profile Picture Avatar & User Info */}
+            {/* Profile Avatar Button */}
             <div className="flex items-center space-x-3 pl-3 border-l-2 border-slate-200">
-              {/* Profile Avatar Button */}
               <button
-                onClick={() => setIsAvatarModalOpen(true)}
+                onClick={() => {
+                  setUploadError(null);
+                  setIsAvatarModalOpen(true);
+                }}
                 title="Manage Profile Photo"
                 className="relative group focus:outline-none"
               >
@@ -146,13 +197,13 @@ const Navbar = () => {
       {isAvatarModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 font-sans">
           <div className="bg-white border-2 border-blue-500 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-6 relative animate-fadeIn">
-            {/* Modal Header */}
+            {/* Header */}
             <div className="flex items-center justify-between border-b-2 border-slate-100 pb-3">
               <h3 className="text-lg font-extrabold text-slate-900 flex items-center space-x-2">
                 <div className="p-1.5 rounded-lg border-2 border-blue-600 bg-blue-50 text-blue-600">
                   <User className="w-4 h-4" />
                 </div>
-                <span>Profile Avatar Settings</span>
+                <span>Profile Photo Settings</span>
               </h3>
               <button
                 onClick={() => setIsAvatarModalOpen(false)}
@@ -162,7 +213,13 @@ const Navbar = () => {
               </button>
             </div>
 
-            {/* Current Avatar Display */}
+            {uploadError && (
+              <div className="p-3 bg-rose-50 border-2 border-rose-500 rounded-xl text-rose-700 text-xs font-bold">
+                {uploadError}
+              </div>
+            )}
+
+            {/* Avatar Preview */}
             <div className="flex flex-col items-center space-y-3 py-2">
               {user?.profileImage ? (
                 <img
@@ -181,24 +238,33 @@ const Navbar = () => {
               </div>
             </div>
 
-            {/* Hidden File Input */}
+            {/* Hidden File Input for JPG/JPEG/PNG */}
             <input
               type="file"
               ref={fileInputRef}
-              accept="image/*"
+              accept="image/jpeg, image/jpg, image/png, image/webp, image/*"
               onChange={handleFileChange}
               className="hidden"
             />
 
-            {/* Action Buttons */}
+            {/* Controls */}
             <div className="space-y-3 pt-2">
               <button
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isUploading}
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white font-extrabold py-3 px-4 rounded-xl border-2 border-blue-700 shadow-md flex items-center justify-center space-x-2 transition-all disabled:opacity-50"
               >
-                <Camera className="w-4 h-4" />
-                <span>{user?.profileImage ? 'Upload New Photo from Gallery' : 'Upload Photo from Gallery'}</span>
+                {isUploading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Processing & Uploading JPG...</span>
+                  </>
+                ) : (
+                  <>
+                    <Camera className="w-4 h-4" />
+                    <span>Upload JPG / Image from Gallery</span>
+                  </>
+                )}
               </button>
 
               {user?.profileImage && (
