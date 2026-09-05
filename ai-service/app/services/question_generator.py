@@ -7,118 +7,142 @@ from app.models.schemas import QuestionItem
 
 logger = logging.getLogger("ai_service")
 
-# Curated fallback questions by role and type
-ROLE_QUESTION_BANK = {
-    "technical": {
-        "Full Stack Engineer": [
+# Curated fallback questions by Language, Difficulty, Role & Type
+LANGUAGE_QUESTION_BANK = {
+    "Java": {
+        "Basic": [
             {
-                "questionText": "How do you optimize rendering performance in a large-scale React application with frequent state updates?",
-                "category": "Frontend Performance",
-                "expectedKeywords": ["useMemo", "useCallback", "virtualization", "component splitting", "state collocation"]
+                "questionText": "Explain the difference between JDK, JRE, and JVM in Java. How does Java achieve platform independence?",
+                "category": "Java Foundations",
+                "expectedKeywords": ["bytecode", "jvm", "jre", "jdk", "platform independence"]
             },
             {
-                "questionText": "Explain how you would design an index strategy in MongoDB for a query with equality, sort, and range conditions (ESR rule).",
-                "category": "Database Optimization",
-                "expectedKeywords": ["ESR rule", "compound index", "query execution plan", "explain()", "index scan"]
-            },
-            {
-                "questionText": "What are the primary differences between HTTP/1.1, HTTP/2, and WebSockets when building real-time client-server communication?",
-                "category": "Networking & Protocols",
-                "expectedKeywords": ["multiplexing", "full-duplex", "connection overhead", "header compression", "sse"]
-            },
-            {
-                "questionText": "How do you handle JWT authentication securely in web applications regarding XSS and CSRF prevention?",
-                "category": "Web Security",
-                "expectedKeywords": ["httpOnly cookie", "sameSite", "CSRF token", "XSS sanitization", "short-lived token"]
-            },
-            {
-                "questionText": "Describe your strategy for state management in a complex React SPA using Redux Toolkit.",
-                "category": "State Management",
-                "expectedKeywords": ["createSlice", "createAsyncThunk", "normalized state", "selectors", "middleware"]
+                "questionText": "What is the difference between String, StringBuilder, and StringBuffer in Java regarding mutability and thread safety?",
+                "category": "Java Memory & Strings",
+                "expectedKeywords": ["immutable", "stringbuilder", "stringbuffer", "thread safety", "string pool"]
             }
         ],
-        "Backend Engineer": [
+        "Intermediate": [
             {
-                "questionText": "How do you prevent race conditions when two concurrent requests try to decrement a user's account balance?",
-                "category": "Concurrency & Locking",
-                "expectedKeywords": ["optimistic locking", "pessimistic locking", "atomic operations", "database transaction", "isolation level"]
+                "questionText": "How does HashMap work internally in Java 8+? Explain buckets, hash collisions, and treeifying bins.",
+                "category": "Java Collections",
+                "expectedKeywords": ["hashCode()", "equals()", "red-black tree", "hash collision", "bucket"]
             },
             {
-                "questionText": "Compare horizontal scaling vs vertical scaling for a RESTful Node.js service experiencing high traffic spikes.",
-                "category": "System Architecture",
-                "expectedKeywords": ["load balancer", "stateless architecture", "redis session store", "auto-scaling", "clustering"]
-            },
-            {
-                "questionText": "How do rate limiting algorithms like Token Bucket and Leaky Bucket work, and where would you implement them?",
-                "category": "API Gateway & Security",
-                "expectedKeywords": ["token bucket", "leaky bucket", "redis rate limiter", "429 Too Many Requests", "sliding window"]
+                "questionText": "Compare fail-fast vs fail-safe iterators in Java with examples from Java Collections Framework.",
+                "category": "Java Concurrency",
+                "expectedKeywords": ["ConcurrentModificationException", "CopyOnWriteArrayList", "ConcurrentHashMap", "modCount"]
             }
         ],
-        "Frontend Engineer": [
+        "Advanced": [
             {
-                "questionText": "Explain the Event Loop in JavaScript, specifically microtasks vs macrotasks.",
-                "category": "JavaScript Core",
-                "expectedKeywords": ["call stack", "event queue", "Promise", "setTimeout", "microtask queue"]
+                "questionText": "Explain Garbage Collection algorithms in Java (G1GC vs ZGC). How do you diagnose and tune G1GC pauses?",
+                "category": "JVM Tuning & Memory",
+                "expectedKeywords": ["G1GC", "ZGC", "heap memory", "stop-the-world", "young generation", "tenured"]
             },
             {
-                "questionText": "How does CSS Grid differ from Flexbox, and when would you choose one over the other?",
-                "category": "CSS Layout",
-                "expectedKeywords": ["two-dimensional", "one-dimensional", "grid-template-columns", "flex-direction", "layout flow"]
+                "questionText": "How do Virtual Threads (Project Loom) in Java 21 differ from platform OS threads under high concurrency?",
+                "category": "Java Concurrency & Threading",
+                "expectedKeywords": ["virtual threads", "carrier threads", "continuation", "non-blocking", "project loom"]
             }
         ]
     },
-    "behavioral": {
-        "General": [
+    "Python": {
+        "Basic": [
             {
-                "questionText": "Tell me about a time you had a technical disagreement with a teammate regarding system architecture. How did you resolve it?",
-                "category": "Conflict Resolution & Collaboration",
-                "expectedKeywords": ["tradeoff analysis", "benchmarking", "active listening", "consensus", "documentation"]
+                "questionText": "Explain the difference between list, tuple, set, and dictionary data structures in Python regarding mutability and ordering.",
+                "category": "Python Basics",
+                "expectedKeywords": ["mutable", "immutable", "hashable", "tuple", "dictionary"]
             },
             {
-                "questionText": "Describe a scenario where a critical bug slipped into production. How did you investigate, communicate, and remediate it?",
-                "category": "Incident Response & Accountability",
-                "expectedKeywords": ["root cause analysis", "blameless post-mortem", "rollback", "logging", "monitoring"]
+                "questionText": "What are Python list comprehensions and generators? When would you use a generator over a list?",
+                "category": "Python Iterators",
+                "expectedKeywords": ["yield", "generator", "memory efficiency", "lazy evaluation"]
+            }
+        ],
+        "Intermediate": [
+            {
+                "questionText": "How do decorators work in Python? Write the concept of a decorator that measures execution time.",
+                "category": "Python Metaprogramming",
+                "expectedKeywords": ["functools.wraps", "closure", "inner function", "*args", "**kwargs"]
             },
             {
-                "questionText": "How do you prioritize competing deadlines when product requirements shift mid-sprint?",
-                "category": "Agile & Time Management",
-                "expectedKeywords": ["impact vs effort", "stakeholder communication", "MVP focus", "ticket scope", "re-prioritization"]
+                "questionText": "Explain how GIL (Global Interpreter Lock) affects multithreading in CPython vs multiprocessing.",
+                "category": "Python Concurrency",
+                "expectedKeywords": ["GIL", "CPython", "multiprocessing", "asyncio", "cpu-bound"]
+            }
+        ],
+        "Advanced": [
+            {
+                "questionText": "How does Python handle memory management and garbage collection (reference counting + cyclic GC)?",
+                "category": "Python Memory Internals",
+                "expectedKeywords": ["reference count", "cyclic gc", "gc module", "weakref", "tracemalloc"]
             },
             {
-                "questionText": "Give an example of how you mentored a junior colleague or onboarded a new team member.",
-                "category": "Leadership & Mentorship",
-                "expectedKeywords": ["pair programming", "code reviews", "documentation", "feedback", "growth mindset"]
+                "questionText": "Compare asyncio event loops with OS threads for high-concurrency network I/O in Python 3.12.",
+                "category": "Python Async Architecture",
+                "expectedKeywords": ["asyncio", "event loop", "awaitable", "non-blocking socket", "task scheduling"]
+            }
+        ]
+    },
+    "C++": {
+        "Basic": [
+            {
+                "questionText": "Explain pointers vs references in C++. What are stack allocation and heap allocation using new/delete?",
+                "category": "C++ Basics",
+                "expectedKeywords": ["pointer", "reference", "stack", "heap", "delete"]
+            }
+        ],
+        "Advanced": [
+            {
+                "questionText": "Explain RAII and Smart Pointers (std::unique_ptr, std::shared_ptr, std::weak_ptr) in C++17/20.",
+                "category": "C++ Memory Management",
+                "expectedKeywords": ["RAII", "unique_ptr", "shared_ptr", "reference counting", "move semantics"]
+            }
+        ]
+    },
+    "SQL": {
+        "Basic": [
+            {
+                "questionText": "Explain the difference between WHERE and HAVING clauses in SQL, and when to use GROUP BY.",
+                "category": "SQL Queries",
+                "expectedKeywords": ["WHERE", "HAVING", "GROUP BY", "aggregation"]
+            }
+        ],
+        "Advanced": [
+            {
+                "questionText": "Explain SQL Window Functions (ROW_NUMBER, RANK, DENSE_RANK) and indexing strategies for complex JOINs.",
+                "category": "SQL Optimization",
+                "expectedKeywords": ["OVER(PARTITION BY)", "ROW_NUMBER", "B-tree index", "execution plan"]
             }
         ]
     }
 }
 
-def generate_questions(role: str, q_type: str, count: int) -> List[QuestionItem]:
+def generate_questions(role: str, q_type: str, count: int, language: str = "Java", difficulty: str = "Intermediate") -> List[QuestionItem]:
     """
-    Generates role-specific interview questions using OpenAI if API key is set,
-    or falls back to curated domain questions.
+    Generates language-specific and difficulty-level interview questions.
     """
     api_key = settings.openai_api_key.strip()
     if api_key:
         try:
             client = OpenAI(api_key=api_key)
             prompt = (
-                f"You are an expert technical interviewer hiring for a '{role}' position.\n"
-                f"Generate {count} high-quality {q_type} interview questions suitable for assessing a candidate.\n"
+                f"You are a principal technical interviewer evaluating a candidate for a '{role}' role.\n"
+                f"Generate {count} {q_type} interview questions focused on programming language: '{language}' at difficulty level: '{difficulty}'.\n"
+                f"Ensure the questions directly assess {language} concepts suitable for {difficulty} level candidates.\n"
                 f"Respond ONLY with a JSON array of objects, where each object has:\n"
                 f"- 'questionText': concise, specific question\n"
-                f"- 'category': technical area or soft skill domain\n"
-                f"- 'expectedKeywords': list of 4-6 key concepts/terms expected in a top response.\n\n"
-                f"Example format:\n"
-                f"[{{\"questionText\": \"...\", \"category\": \"...\", \"expectedKeywords\": [\"...\"]}}]"
+                f"- 'category': technical concept or domain area\n"
+                f"- 'expectedKeywords': list of 4-6 key concepts/terms expected in a top response.\n"
             )
             response = client.chat.completions.create(
                 model=settings.openai_model,
                 messages=[
-                    {"role": "system", "content": "You output strictly JSON."},
+                    {"role": "system", "content": "You output strictly valid JSON."},
                     {"role": "user", "content": prompt}
                 ],
-                temperature=0.7,
+                temperature=0.4,
                 response_format={"type": "json_object"} if "gpt-4" in settings.openai_model or "gpt-3.5" in settings.openai_model else None
             )
             raw_content = response.choices[0].message.content.strip()
@@ -129,25 +153,23 @@ def generate_questions(role: str, q_type: str, count: int) -> List[QuestionItem]
             for item in items[:count]:
                 results.append(QuestionItem(
                     questionText=item.get("questionText", ""),
-                    category=item.get("category", "General"),
+                    category=item.get("category", f"{language} {difficulty}"),
                     expectedKeywords=item.get("expectedKeywords", [])
                 ))
             if results:
                 return results
         except Exception as e:
-            logger.warning(f"OpenAI question generation failed: {e}. Falling back to template bank.")
+            logger.warning(f"OpenAI question generation failed: {e}. Falling back to language domain bank.")
 
-    # Fallback logic using domain question bank
-    category_pool = ROLE_QUESTION_BANK.get(q_type, {}).get(role, [])
-    if not category_pool and q_type == "technical":
-        category_pool = ROLE_QUESTION_BANK["technical"]["Full Stack Engineer"]
-    if not category_pool or q_type == "behavioral":
-        category_pool = ROLE_QUESTION_BANK["behavioral"]["General"]
+    # Fallback to language-specific pool
+    lang_pool = LANGUAGE_QUESTION_BANK.get(language, {}).get(difficulty, [])
+    if not lang_pool:
+        lang_pool = LANGUAGE_QUESTION_BANK.get("Java", {}).get("Intermediate", [])
 
     results = []
-    pool_len = len(category_pool)
+    pool_len = len(lang_pool)
     for i in range(count):
-        item = category_pool[i % pool_len]
+        item = lang_pool[i % pool_len]
         results.append(QuestionItem(
             questionText=item["questionText"],
             category=item["category"],

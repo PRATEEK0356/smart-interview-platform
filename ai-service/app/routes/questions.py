@@ -10,7 +10,9 @@ async def get_questions(payload: QuestionRequest):
         questions = generate_questions(
             role=payload.role,
             q_type=payload.type.lower(),
-            count=payload.count
+            count=payload.count,
+            language=payload.language or "Java/Python",
+            difficulty=payload.difficulty or "Intermediate"
         )
         return QuestionResponse(questions=questions)
     except Exception as e:

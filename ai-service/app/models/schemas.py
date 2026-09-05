@@ -3,8 +3,10 @@ from typing import List, Optional
 
 class QuestionRequest(BaseModel):
     role: str = Field(..., example="Software Engineer")
-    type: str = Field(..., example="technical")  # technical or behavioral
+    type: str = Field(..., example="technical")
     count: int = Field(default=3, ge=1, le=10)
+    language: Optional[str] = Field(default="Java/Python", example="Java")
+    difficulty: Optional[str] = Field(default="Intermediate", example="Advanced")
 
 class QuestionItem(BaseModel):
     questionText: str
@@ -22,6 +24,6 @@ class EvaluationResponse(BaseModel):
     score: int = Field(..., ge=0, le=100)
     feedback: str
     keywords: List[str]
-    sentiment: str  # Positive, Neutral, Constructive
+    sentiment: str
     structuralScore: int
     qualitativeAnalysis: str

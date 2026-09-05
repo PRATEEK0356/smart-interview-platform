@@ -55,6 +55,14 @@ const interviewSessionSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    language: {
+      type: String,
+      default: 'Java',
+    },
+    difficulty: {
+      type: String,
+      default: 'Intermediate',
+    },
     type: {
       type: String,
       enum: ['technical', 'behavioral'],

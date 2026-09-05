@@ -20,6 +20,7 @@ import {
   Mic,
   Square,
   LogOut,
+  Code2,
 } from 'lucide-react';
 
 const InterviewPage = () => {
@@ -84,7 +85,7 @@ const InterviewPage = () => {
 
   if (isLoading || !activeSession) {
     return (
-      <div className="min-h-[70vh] flex flex-col items-center justify-center space-y-4 bg-slate-50">
+      <div className="min-h-[70vh] flex flex-col items-center justify-center space-y-4 bg-slate-50 font-baskerville">
         <Loader2 className="w-10 h-10 text-blue-600 animate-spin" />
         <p className="text-slate-600 font-bold text-sm">Entering interview session quiet room...</p>
       </div>
@@ -144,13 +145,19 @@ const InterviewPage = () => {
   const wordCount = answerText.trim() ? answerText.trim().split(/\s+/).length : 0;
 
   return (
-    <div className="bg-slate-50 min-h-screen py-8">
-      {/* Quiet Room Header: Clean minimal chrome */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mb-6 flex items-center justify-between">
-        <div className="flex items-center space-x-3">
-          <span className="text-xs font-black text-slate-800 uppercase tracking-wider bg-white px-3 py-1 rounded-lg border border-slate-200">
+    <div className="bg-slate-50 min-h-screen py-8 font-baskerville">
+      {/* Quiet Room Header */}
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mb-6 flex items-center justify-between font-sans">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs font-black text-slate-800 uppercase tracking-wider bg-white px-3 py-1 rounded-lg border border-slate-300">
             {activeSession.role} &bull; {activeSession.type}
           </span>
+          {activeSession.language && (
+            <span className="text-xs font-bold text-blue-700 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-300 flex items-center space-x-1">
+              <Code2 className="w-3.5 h-3.5" />
+              <span>{activeSession.language} ({activeSession.difficulty || 'Intermediate'})</span>
+            </span>
+          )}
           <span className="text-xs font-bold text-slate-500">
             Question {currentQuestionIndex + 1} of {questions.length}
           </span>
@@ -161,14 +168,14 @@ const InterviewPage = () => {
           className="text-xs font-bold text-slate-500 hover:text-rose-600 flex items-center space-x-1.5 transition-colors"
         >
           <LogOut className="w-3.5 h-3.5" />
-          <span>Exit interview room</span>
+          <span>Exit room</span>
         </button>
       </div>
 
       {/* Main Quiet Room Layout */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 font-baskerville">
         {error && (
-          <div className="p-4 bg-rose-50 border border-rose-300 rounded-xl flex items-center space-x-3 text-rose-700 text-sm font-bold">
+          <div className="p-4 bg-rose-50 border border-rose-300 rounded-xl flex items-center space-x-3 text-rose-700 text-sm font-bold font-sans">
             <AlertCircle className="w-5 h-5 flex-shrink-0" />
             <span>{error}</span>
           </div>
@@ -179,16 +186,16 @@ const InterviewPage = () => {
           <div className="lg:col-span-8 space-y-6">
             
             {/* Question Card */}
-            <div className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-sm space-y-4">
+            <div className="bg-white border-2 border-blue-500 rounded-2xl p-6 sm:p-8 shadow-sm space-y-4">
               <div className="flex items-center justify-between">
-                <span className="px-3 py-1 rounded-md text-xs font-extrabold bg-blue-50 text-blue-700 border border-blue-200">
-                  {currentQuestion?.category || 'General Domain'}
+                <span className="px-3 py-1 rounded-md text-xs font-extrabold bg-blue-50 text-blue-700 border border-blue-200 font-sans">
+                  {currentQuestion?.category || `${activeSession.language || 'Technical'} Domain`}
                 </span>
 
                 {hasTtsSupport && (
                   <button
                     onClick={handleReplayQuestion}
-                    className={`flex items-center space-x-2 px-3 py-1 rounded-lg text-xs font-bold border transition-all ${
+                    className={`flex items-center space-x-2 px-3 py-1 rounded-lg text-xs font-bold border transition-all font-sans ${
                       isSpeaking
                         ? 'bg-blue-600 text-white border-blue-700 animate-pulse'
                         : 'bg-white text-blue-600 border-blue-300 hover:bg-blue-50'
@@ -200,12 +207,12 @@ const InterviewPage = () => {
                 )}
               </div>
 
-              <h2 className="text-xl sm:text-2xl font-black text-slate-900 leading-snug">
+              <h2 className="text-xl sm:text-2xl font-black text-slate-900 leading-snug font-baskerville">
                 "{currentQuestion?.questionText}"
               </h2>
 
               {currentQuestion?.expectedKeywords && currentQuestion.expectedKeywords.length > 0 && (
-                <div className="flex flex-wrap items-center gap-2 pt-3 border-t border-slate-100">
+                <div className="flex flex-wrap items-center gap-2 pt-3 border-t border-slate-100 font-sans">
                   <span className="text-xs font-bold text-slate-500 flex items-center space-x-1">
                     <Tag className="w-3 h-3 text-blue-600" />
                     <span>Expected Key Concepts:</span>
@@ -221,8 +228,8 @@ const InterviewPage = () => {
 
             {/* Focal Answer Response Form */}
             <form onSubmit={handleSubmitAnswer} className="space-y-4">
-              <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
-                <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="bg-white border-2 border-blue-500 rounded-2xl p-6 shadow-sm space-y-4 font-baskerville">
+                <div className="flex flex-wrap items-center justify-between gap-2 font-sans">
                   <div className="flex items-center space-x-3">
                     <label className="text-xs font-extrabold uppercase tracking-wider text-slate-700">
                       Candidate Response Input
@@ -259,7 +266,7 @@ const InterviewPage = () => {
                 </div>
 
                 {isListening && (
-                  <div className="p-3 bg-rose-50 border border-rose-300 rounded-xl flex items-center justify-between text-xs text-rose-700 font-extrabold">
+                  <div className="p-3 bg-rose-50 border border-rose-300 rounded-xl flex items-center justify-between text-xs text-rose-700 font-extrabold font-sans">
                     <div className="flex items-center space-x-2">
                       <span className="w-2.5 h-2.5 rounded-full bg-rose-600 animate-ping" />
                       <span>Microphone Active. Speak your response clearly...</span>
@@ -272,19 +279,19 @@ const InterviewPage = () => {
                   disabled={isCurrentAnswered || isSubmitting}
                   value={answerText}
                   onChange={(e) => setAnswerText(e.target.value)}
-                  placeholder="Type your response here or click 'Deliver Answer via Mic' to speak into your microphone..."
-                  className="w-full bg-white border border-slate-300 focus:border-blue-600 rounded-xl p-4 text-sm font-medium text-slate-900 placeholder-slate-400 outline-none transition-all leading-relaxed resize-y disabled:bg-slate-50"
+                  placeholder={`Type your response here or click 'Deliver Answer via Mic' to speak into your microphone...`}
+                  className="w-full bg-white border border-slate-300 focus:border-blue-600 rounded-xl p-4 text-sm font-medium text-slate-900 placeholder-slate-400 outline-none transition-all leading-relaxed resize-y disabled:bg-slate-50 font-baskerville"
                 />
 
                 {!isCurrentAnswered && (
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
-                    <p className="text-xs text-slate-500 font-medium">
+                    <p className="text-xs text-slate-500 font-medium font-baskerville">
                       Take your time. Maintain eye contact with the video monitor on your right.
                     </p>
                     <button
                       type="submit"
                       disabled={isSubmitting || !answerText.trim()}
-                      className="bg-blue-600 hover:bg-blue-700 text-white font-extrabold py-3 px-6 rounded-xl shadow-md flex items-center justify-center space-x-2 text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="bg-blue-600 hover:bg-blue-700 text-white font-extrabold py-3 px-6 rounded-xl shadow-md flex items-center justify-center space-x-2 text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed font-sans"
                     >
                       {isSubmitting ? (
                         <>
@@ -305,15 +312,15 @@ const InterviewPage = () => {
 
             {/* Evaluation Result Feedback */}
             {isCurrentAnswered && (
-              <div className="bg-white border border-blue-300 rounded-2xl p-6 shadow-md space-y-4">
+              <div className="bg-white border-2 border-blue-500 rounded-2xl p-6 shadow-md space-y-4 font-baskerville">
                 <div className="flex items-center justify-between border-b border-slate-200 pb-3">
                   <div className="flex items-center space-x-3">
-                    <div className="w-12 h-12 rounded-xl bg-blue-600 text-white flex items-center justify-center font-black text-xl shadow-sm">
+                    <div className="w-12 h-12 rounded-xl bg-blue-600 text-white flex items-center justify-center font-black text-xl shadow-sm border border-blue-700">
                       {currentQuestion.score}
                     </div>
                     <div>
-                      <h3 className="font-extrabold text-slate-900 text-base">Question Evaluation</h3>
-                      <p className="text-xs text-slate-500 font-bold">
+                      <h3 className="font-extrabold text-slate-900 text-base font-baskerville">Question Evaluation</h3>
+                      <p className="text-xs text-slate-500 font-bold font-sans">
                         Tone: {currentQuestion.sentiment || 'Objective'} &bull; Visual Engagement: {currentQuestion.visualMetrics?.presenceScore || 90}%
                       </p>
                     </div>
@@ -321,13 +328,13 @@ const InterviewPage = () => {
                 </div>
 
                 <div className="bg-blue-50/60 p-4 rounded-xl border border-blue-200 space-y-1">
-                  <h4 className="text-xs font-extrabold uppercase tracking-wider text-blue-800">Mentor Notes</h4>
-                  <p className="text-sm text-slate-800 font-medium leading-relaxed">
+                  <h4 className="text-xs font-extrabold uppercase tracking-wider text-blue-800 font-sans">Mentor Notes</h4>
+                  <p className="text-base text-slate-800 font-medium leading-relaxed font-baskerville">
                     {currentQuestion.feedback}
                   </p>
                 </div>
 
-                <div className="flex justify-end pt-2">
+                <div className="flex justify-end pt-2 font-sans">
                   <button
                     onClick={handleNextOrFinish}
                     className="bg-blue-600 hover:bg-blue-700 text-white font-extrabold py-3 px-6 rounded-xl shadow-md flex items-center space-x-2 text-sm transition-all"

@@ -6,17 +6,25 @@ import { fetchGeneratedQuestions, fetchAnswerEvaluation } from '../services/aiSe
 // @access  Private
 export const createSession = async (req, res, next) => {
   try {
-    const { role, type, questionCount } = req.body;
+    const { role, type, questionCount, language, difficulty } = req.body;
     const targetRole = role || req.user.targetRole || 'Full Stack Engineer';
     const interviewType = type || 'technical';
     const count = parseInt(questionCount, 10) || 3;
+    const targetLanguage = language || 'Java';
+    const targetDifficulty = difficulty || 'Intermediate';
 
-    // Fetch AI-generated questions
-    const generatedQuestions = await fetchGeneratedQuestions(targetRole, interviewType, count);
+    // Fetch AI-generated questions tailored by role, type, language & difficulty
+    const generatedQuestions = await fetchGeneratedQuestions(
+      targetRole,
+      interviewType,
+      count,
+      targetLanguage,
+      targetDifficulty
+    );
 
     const questionsData = generatedQuestions.map(q => ({
       questionText: q.questionText,
-      category: q.category || 'General',
+      category: q.category || `${targetLanguage} ${targetDifficulty}`,
       expectedKeywords: q.expectedKeywords || [],
       answerText: '',
       score: null,
@@ -33,6 +41,8 @@ export const createSession = async (req, res, next) => {
     const session = await InterviewSession.create({
       userId: req.user._id,
       role: targetRole,
+      language: targetLanguage,
+      difficulty: targetDifficulty,
       type: interviewType,
       status: 'in_progress',
       questions: questionsData,
