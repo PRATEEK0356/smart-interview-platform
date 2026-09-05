@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routes import questions
+from app.routes import questions, evaluate
 
 app = FastAPI(
     title="Smart Interview AI Microservice",
@@ -17,6 +17,7 @@ app.add_middleware(
 )
 
 app.include_router(questions.router)
+app.include_router(evaluate.router)
 
 @app.get("/health")
 def health_check():
