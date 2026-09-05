@@ -32,9 +32,9 @@ export const fetchSession = createAsyncThunk(
 
 export const submitQuestionAnswer = createAsyncThunk(
   'interview/submitQuestionAnswer',
-  async ({ sessionId, questionIndex, answerText }, { rejectWithValue }) => {
+  async ({ sessionId, questionIndex, answerText, visualMetrics }, { rejectWithValue }) => {
     try {
-      const data = await submitAnswerApi(sessionId, { questionIndex, answerText });
+      const data = await submitAnswerApi(sessionId, { questionIndex, answerText, visualMetrics });
       return data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.error || 'Failed to submit answer.');
@@ -102,7 +102,6 @@ const interviewSlice = createSlice({
       .addCase(fetchSession.fulfilled, (state, action) => {
         state.isLoading = false;
         state.activeSession = action.payload;
-        // set currentQuestionIndex to first unanswered question or last
         const unansweredIdx = action.payload.questions.findIndex(q => q.score === null);
         state.currentQuestionIndex = unansweredIdx >= 0 ? unansweredIdx : 0;
       })

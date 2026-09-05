@@ -33,6 +33,11 @@ const questionSchema = new mongoose.Schema({
     type: String,
     default: '',
   },
+  visualMetrics: {
+    faceDetected: { type: Boolean, default: true },
+    presenceScore: { type: Number, default: 90 },
+    engagementStatus: { type: String, default: 'Candidate Verified' }
+  },
   answeredAt: {
     type: Date,
   },

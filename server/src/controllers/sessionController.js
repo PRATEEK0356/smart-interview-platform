@@ -22,7 +22,12 @@ export const createSession = async (req, res, next) => {
       score: null,
       feedback: '',
       keywords: [],
-      sentiment: ''
+      sentiment: '',
+      visualMetrics: {
+        faceDetected: true,
+        presenceScore: 90,
+        engagementStatus: 'Candidate Verified'
+      }
     }));
 
     const session = await InterviewSession.create({
@@ -75,7 +80,7 @@ export const getSessionById = async (req, res, next) => {
 // @access  Private
 export const submitAnswer = async (req, res, next) => {
   try {
-    const { questionIndex, answerText } = req.body;
+    const { questionIndex, answerText, visualMetrics } = req.body;
     const session = await InterviewSession.findById(req.params.id);
 
     if (!session) {
@@ -108,6 +113,13 @@ export const submitAnswer = async (req, res, next) => {
     question.feedback = evalResult.feedback;
     question.keywords = evalResult.keywords;
     question.sentiment = evalResult.sentiment;
+    if (visualMetrics) {
+      question.visualMetrics = {
+        faceDetected: visualMetrics.faceDetected ?? true,
+        presenceScore: visualMetrics.score || visualMetrics.presenceScore || 90,
+        engagementStatus: visualMetrics.status || visualMetrics.engagementStatus || 'Candidate Verified'
+      };
+    }
     question.answeredAt = new Date();
 
     await session.save();

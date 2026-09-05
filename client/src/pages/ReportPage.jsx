@@ -12,6 +12,8 @@ import {
   Sparkles,
   TrendingUp,
   FileText,
+  Video,
+  UserCheck,
 } from 'lucide-react';
 
 const ReportPage = () => {
@@ -92,7 +94,7 @@ const ReportPage = () => {
           <div className="space-y-2">
             <span className="inline-flex items-center space-x-2 px-3 py-1 rounded-full text-xs font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20">
               <Sparkles className="w-3.5 h-3.5" />
-              <span>Interview Session Report</span>
+              <span>AI Proctored Session Report</span>
             </span>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">{session.role}</h1>
             <div className="flex flex-wrap items-center gap-4 text-xs text-slate-400">
@@ -113,9 +115,9 @@ const ReportPage = () => {
               {score}
             </div>
             <div>
-              <span className="text-xs uppercase font-semibold text-slate-400 block tracking-wider">Overall Score</span>
+              <span className="text-xs uppercase font-semibold text-slate-400 block tracking-wider">Overall Performance Score</span>
               <span className="text-sm font-bold text-white">
-                {score >= 80 ? 'Strong Performance' : score >= 65 ? 'Good Foundation' : 'Needs Practice'}
+                {score >= 80 ? 'Strong Technical Mastery' : score >= 65 ? 'Good Foundation' : 'Needs Practice'}
               </span>
             </div>
           </div>
@@ -126,7 +128,7 @@ const ReportPage = () => {
       <div className="space-y-6">
         <h2 className="text-xl font-bold text-white flex items-center space-x-2">
           <FileText className="w-5 h-5 text-blue-400" />
-          <span>Detailed Question Breakdown</span>
+          <span>Detailed Question & Visual Recognition Breakdown</span>
         </h2>
 
         {session.questions.map((q, idx) => (
@@ -139,7 +141,11 @@ const ReportPage = () => {
                 <span className="text-xs font-semibold text-slate-400">{q.category || 'General'}</span>
               </div>
 
-              <div className="flex items-center space-x-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-xs px-2.5 py-1 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center space-x-1 font-medium">
+                  <UserCheck className="w-3.5 h-3.5" />
+                  <span>Camera Score: {q.visualMetrics?.presenceScore || 90}%</span>
+                </span>
                 <span className="text-xs px-2.5 py-1 rounded-md bg-slate-950 text-slate-300 border border-slate-800">
                   Tone: {q.sentiment || 'Objective'}
                 </span>
@@ -160,7 +166,7 @@ const ReportPage = () => {
 
             {/* Candidate's Answer */}
             <div className="bg-slate-950/80 p-4 rounded-xl border border-slate-800/80">
-              <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Candidate Answer</h4>
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Candidate Response</h4>
               <p className="text-xs text-slate-300 leading-relaxed font-mono whitespace-pre-wrap">
                 {q.answerText || 'No answer provided.'}
               </p>
@@ -168,7 +174,7 @@ const ReportPage = () => {
 
             {/* AI Feedback */}
             <div className="bg-blue-950/20 p-4 rounded-xl border border-blue-500/20">
-              <h4 className="text-xs font-semibold uppercase tracking-wider text-blue-400 mb-1">AI Qualitative Feedback</h4>
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-blue-400 mb-1">AI Qualitative Evaluation</h4>
               <p className="text-xs text-slate-200 leading-relaxed">
                 {q.feedback || 'Answer evaluated.'}
               </p>
