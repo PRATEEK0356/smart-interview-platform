@@ -3,6 +3,7 @@ import cors from 'cors';
 import { config } from './config/env.js';
 import { connectDB } from './config/db.js';
 import authRoutes from './routes/authRoutes.js';
+import sessionRoutes from './routes/sessionRoutes.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
 const app = express();
@@ -12,7 +13,7 @@ connectDB();
 
 // Middleware
 app.use(cors({
-  origin: true, // Allow frontend origin
+  origin: true,
   credentials: true
 }));
 app.use(express.json());
@@ -23,6 +24,7 @@ app.get('/health', (req, res) => {
 });
 
 app.use('/api/auth', authRoutes);
+app.use('/api/sessions', sessionRoutes);
 
 // Centralized error handler
 app.use(errorHandler);
