@@ -8,6 +8,8 @@ import {
   finishSession,
 } from '../features/interview/interviewSlice';
 import WebcamMonitor from '../components/WebcamMonitor';
+import useVoiceSynthesis from '../hooks/useVoiceSynthesis';
+import useSpeechRecognition from '../hooks/useSpeechRecognition';
 import {
   Sparkles,
   Send,
@@ -17,6 +19,11 @@ import {
   Loader2,
   AlertCircle,
   Video,
+  Volume2,
+  VolumeX,
+  Mic,
+  MicOff,
+  Square,
 } from 'lucide-react';
 
 const InterviewPage = () => {
@@ -39,6 +46,16 @@ const InterviewPage = () => {
     score: 90,
   });
 
+  // Voice Hooks
+  const { speak, stop: stopVoice, isSpeaking, hasSupport: hasTtsSupport } = useVoiceSynthesis();
+  const {
+    startListening,
+    stopListening,
+    isListening,
+    transcript,
+    hasSupport: hasSttSupport,
+  } = useSpeechRecognition();
+
   const handleMetricsUpdate = useCallback((metrics) => {
     setLiveVisualMetrics(metrics);
   }, []);
@@ -49,12 +66,31 @@ const InterviewPage = () => {
     }
   }, [sessionId, dispatch]);
 
+  // Sync current question answer & auto-speak AI question
   useEffect(() => {
     if (activeSession && activeSession.questions[currentQuestionIndex]) {
       const q = activeSession.questions[currentQuestionIndex];
       setAnswerText(q.answerText || '');
+
+      // Speak question via AI Voice if not answered yet
+      if (q.questionText && q.score === null && hasTtsSupport) {
+        speak(q.questionText);
+      }
     }
-  }, [activeSession, currentQuestionIndex]);
+    return () => {
+      stopVoice();
+    };
+  }, [activeSession, currentQuestionIndex, speak, stopVoice, hasTtsSupport]);
+
+  // Update text box as speech is recognized
+  useEffect(() => {
+    if (transcript) {
+      setAnswerText((prev) => {
+        // If empty or new speech start, set or append
+        return transcript;
+      });
+    }
+  }, [transcript]);
 
   if (isLoading || !activeSession) {
     return (
@@ -74,6 +110,11 @@ const InterviewPage = () => {
     e.preventDefault();
     if (!answerText.trim()) return;
 
+    if (isListening) {
+      stopListening();
+    }
+    stopVoice();
+
     await dispatch(
       submitQuestionAnswer({
         sessionId,
@@ -85,11 +126,30 @@ const InterviewPage = () => {
   };
 
   const handleNextOrFinish = async () => {
+    stopVoice();
+    if (isListening) stopListening();
+
     if (isLastQuestion) {
       await dispatch(finishSession(sessionId));
       navigate(`/report/${sessionId}`);
     } else {
       dispatch(setCurrentQuestionIndex(currentQuestionIndex + 1));
+    }
+  };
+
+  const handleToggleMic = () => {
+    if (isListening) {
+      stopListening();
+    } else {
+      startListening();
+    }
+  };
+
+  const handleReplayQuestion = () => {
+    if (isSpeaking) {
+      stopVoice();
+    } else if (currentQuestion?.questionText) {
+      speak(currentQuestion.questionText);
     }
   };
 
@@ -118,24 +178,43 @@ const InterviewPage = () => {
         </div>
       )}
 
-      {/* Main Grid Layout: Left Question & Answer, Right AI Webcam Video Monitor */}
+      {/* Main Grid Layout: Question & Mic Response on Left, Webcam Proctored Monitor on Right */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column: Question Card & Answer Form (2 cols) */}
+        {/* Left Column: AI Question Card & Voice / Text Response */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Question Card */}
-          <div className="bg-slate-900/90 border border-slate-800/80 rounded-2xl p-6 sm:p-8 shadow-2xl backdrop-blur-xl">
-            <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+          {/* Question Card with AI TTS Reader */}
+          <div className="bg-slate-900/90 border border-slate-800/80 rounded-2xl p-6 sm:p-8 shadow-2xl backdrop-blur-xl space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <span className="px-3 py-1 rounded-full text-xs font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20">
                 {currentQuestion?.category || 'General Domain'}
               </span>
 
-              <div className="flex items-center space-x-1.5 text-xs text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-full font-semibold">
-                <Video className="w-3.5 h-3.5" />
-                <span>Webcam AI Proctor Active</span>
-              </div>
+              {/* AI TTS Question Audio Button */}
+              {hasTtsSupport && (
+                <button
+                  onClick={handleReplayQuestion}
+                  className={`flex items-center space-x-2 px-3 py-1 rounded-full text-xs font-semibold border transition-all ${
+                    isSpeaking
+                      ? 'bg-blue-600/20 text-blue-400 border-blue-500 animate-pulse'
+                      : 'bg-slate-800/80 text-slate-300 border-slate-700 hover:text-white hover:bg-slate-800'
+                  }`}
+                >
+                  {isSpeaking ? (
+                    <>
+                      <Volume2 className="w-3.5 h-3.5 animate-bounce text-blue-400" />
+                      <span>Speaking Question...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Volume2 className="w-3.5 h-3.5" />
+                      <span>Listen to AI Voice</span>
+                    </>
+                  )}
+                </button>
+              )}
             </div>
 
-            <h2 className="text-xl sm:text-2xl font-bold text-white leading-snug mb-4">
+            <h2 className="text-xl sm:text-2xl font-bold text-white leading-snug">
               {currentQuestion?.questionText}
             </h2>
 
@@ -155,31 +234,70 @@ const InterviewPage = () => {
             )}
           </div>
 
-          {/* Answer Input Form */}
+          {/* Response Form with Live Microphone Voice STT Integration */}
           <form onSubmit={handleSubmitAnswer} className="space-y-4">
-            <div className="bg-slate-900/90 border border-slate-800/80 rounded-2xl p-6 shadow-xl">
-              <div className="flex items-center justify-between mb-3">
-                <label className="text-xs font-semibold uppercase tracking-wider text-slate-300">
-                  Your Response (Text / Verbal)
-                </label>
+            <div className="bg-slate-900/90 border border-slate-800/80 rounded-2xl p-6 shadow-xl space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center space-x-2">
+                  <label className="text-xs font-semibold uppercase tracking-wider text-slate-300">
+                    Your Response
+                  </label>
+
+                  {/* Microphone Voice Input Toggle Button */}
+                  {!isCurrentAnswered && hasSttSupport && (
+                    <button
+                      type="button"
+                      onClick={handleToggleMic}
+                      className={`flex items-center space-x-1.5 px-3 py-1 rounded-full text-xs font-bold transition-all shadow-md ${
+                        isListening
+                          ? 'bg-rose-600 text-white animate-pulse shadow-rose-600/30'
+                          : 'bg-blue-600/20 text-blue-400 border border-blue-500/30 hover:bg-blue-600/30'
+                      }`}
+                    >
+                      {isListening ? (
+                        <>
+                          <Square className="w-3 h-3 fill-current" />
+                          <span>Stop Recording</span>
+                        </>
+                      ) : (
+                        <>
+                          <Mic className="w-3.5 h-3.5" />
+                          <span>Deliver Answer via Mic</span>
+                        </>
+                      )}
+                    </button>
+                  )}
+                </div>
+
                 <span className={`text-xs font-mono ${wordCount >= 30 ? 'text-emerald-400' : 'text-slate-500'}`}>
                   {wordCount} words
                 </span>
               </div>
+
+              {/* Pulse Listening Status Bar */}
+              {isListening && (
+                <div className="p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl flex items-center justify-between text-xs text-rose-400 font-medium">
+                  <div className="flex items-center space-x-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping" />
+                    <span>Microphone Active. Speak your answer clearly into your mic...</span>
+                  </div>
+                  <span className="font-mono text-[10px] uppercase">STT Speech Engine</span>
+                </div>
+              )}
 
               <textarea
                 rows={6}
                 disabled={isCurrentAnswered || isSubmitting}
                 value={answerText}
                 onChange={(e) => setAnswerText(e.target.value)}
-                placeholder="Explain your approach, architectural trade-offs, and implementation details while maintaining eye contact with the camera..."
+                placeholder="Speak into your microphone or type your response here..."
                 className="w-full bg-slate-950 border border-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded-xl p-4 text-sm text-slate-100 placeholder-slate-500 outline-none transition-all resize-y disabled:opacity-80"
               />
 
               {!isCurrentAnswered && (
                 <div className="mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <p className="text-xs text-slate-500">
-                    Maintain posture and camera eye contact for visual engagement scoring.
+                    You can speak using your mic or edit the transcribed response before submitting.
                   </p>
                   <button
                     type="submit"
@@ -252,12 +370,12 @@ const InterviewPage = () => {
           <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-4 text-xs text-slate-400 space-y-2">
             <h4 className="font-semibold text-slate-200 flex items-center space-x-1.5">
               <Sparkles className="w-3.5 h-3.5 text-blue-400" />
-              <span>Camera & Proctor Tips</span>
+              <span>Voice & Camera Proctoring</span>
             </h4>
             <ul className="list-disc list-inside space-y-1 text-slate-400 leading-relaxed">
-              <li>Position your webcam at eye level in a well-lit room.</li>
-              <li>Keep your face centered inside the video monitor box.</li>
-              <li>Maintain steady eye contact while structuring your answer.</li>
+              <li>Click 🔊 <strong>Listen to AI Voice</strong> to hear the interviewer speak.</li>
+              <li>Click 🎙️ <strong>Deliver Answer via Mic</strong> to speak your answer aloud.</li>
+              <li>Keep your webcam active for full candidate presence scoring.</li>
             </ul>
           </div>
         </div>
