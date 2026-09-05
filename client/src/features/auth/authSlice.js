@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { loginApi, signupApi, fetchMeApi } from '../../api/authApi';
+import { loginApi, signupApi, fetchMeApi, updateProfileImageApi } from '../../api/authApi';
 
 const storedToken = localStorage.getItem('token') || null;
 const storedUser = localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')) : null;
@@ -43,6 +43,19 @@ export const checkAuth = createAsyncThunk(
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       return rejectWithValue(error.response?.data?.error || 'Session expired.');
+    }
+  }
+);
+
+export const updateProfileImage = createAsyncThunk(
+  'auth/updateProfileImage',
+  async ({ profileImage }, { rejectWithValue }) => {
+    try {
+      const data = await updateProfileImageApi({ profileImage });
+      localStorage.setItem('user', JSON.stringify(data.user));
+      return data.user;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.error || 'Failed to update profile image.');
     }
   }
 );
@@ -110,6 +123,10 @@ const authSlice = createSlice({
         state.isAuthenticated = false;
         state.user = null;
         state.token = null;
+      })
+      // Update Profile Image
+      .addCase(updateProfileImage.fulfilled, (state, action) => {
+        state.user = action.payload;
       });
   },
 });

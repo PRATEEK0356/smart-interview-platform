@@ -15,6 +15,11 @@ export const fetchMeApi = async () => {
   return response.data;
 };
 
+export const updateProfileImageApi = async (imageData) => {
+  const response = await axiosClient.put('/auth/profile-image', imageData);
+  return response.data;
+};
+
 export const forgotPasswordApi = async (emailData) => {
   const response = await axiosClient.post('/auth/forgot-password', emailData);
   return response.data;

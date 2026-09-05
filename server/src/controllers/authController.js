@@ -2,16 +2,12 @@ import jwt from 'jsonwebtoken';
 import { User } from '../models/User.js';
 import { config } from '../config/env.js';
 
-// Helper to sign JWT token
 const generateToken = (id) => {
   return jwt.sign({ id }, config.jwtSecret, {
     expiresIn: config.jwtExpire,
   });
 };
 
-// @desc    Register a new user
-// @route   POST /api/auth/signup
-// @access  Public
 export const registerUser = async (req, res, next) => {
   try {
     const { name, email, password, targetRole } = req.body;
@@ -32,6 +28,7 @@ export const registerUser = async (req, res, next) => {
       email: email.toLowerCase(),
       passwordHash: password,
       targetRole: targetRole || 'Full Stack Engineer',
+      profileImage: null,
     });
 
     const token = generateToken(user._id);
@@ -44,6 +41,7 @@ export const registerUser = async (req, res, next) => {
         name: user.name,
         email: user.email,
         targetRole: user.targetRole,
+        profileImage: user.profileImage,
         createdAt: user.createdAt,
       },
     });
@@ -52,9 +50,6 @@ export const registerUser = async (req, res, next) => {
   }
 };
 
-// @desc    Authenticate user & get token
-// @route   POST /api/auth/login
-// @access  Public
 export const loginUser = async (req, res, next) => {
   try {
     const { email, password } = req.body;
@@ -86,6 +81,7 @@ export const loginUser = async (req, res, next) => {
         name: user.name,
         email: user.email,
         targetRole: user.targetRole,
+        profileImage: user.profileImage,
         createdAt: user.createdAt,
       },
     });
@@ -94,9 +90,6 @@ export const loginUser = async (req, res, next) => {
   }
 };
 
-// @desc    Get current user profile
-// @route   GET /api/auth/me
-// @access  Private
 export const getMe = async (req, res, next) => {
   try {
     const user = await User.findById(req.user._id).select('-passwordHash');
@@ -107,6 +100,7 @@ export const getMe = async (req, res, next) => {
         name: user.name,
         email: user.email,
         targetRole: user.targetRole,
+        profileImage: user.profileImage,
         createdAt: user.createdAt,
       },
     });
@@ -115,9 +109,38 @@ export const getMe = async (req, res, next) => {
   }
 };
 
-// @desc    Generate and send 6-digit OTP to user's registered email
-// @route   POST /api/auth/forgot-password
-// @access  Public
+// @desc    Update or remove user profile avatar image
+// @route   PUT /api/auth/profile-image
+// @access  Private
+export const updateProfileImage = async (req, res, next) => {
+  try {
+    const { profileImage } = req.body;
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+      res.status(404);
+      throw new Error('User account not found.');
+    }
+
+    user.profileImage = profileImage || null;
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        targetRole: user.targetRole,
+        profileImage: user.profileImage,
+        createdAt: user.createdAt,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const forgotPassword = async (req, res, next) => {
   try {
     const { email } = req.body;
@@ -133,9 +156,8 @@ export const forgotPassword = async (req, res, next) => {
       throw new Error('No user account found with this email address.');
     }
 
-    // Generate random 6-digit OTP code
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const otpExpire = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes expiry
+    const otpExpire = new Date(Date.now() + 10 * 60 * 1000);
 
     user.resetOtp = otp;
     user.resetOtpExpire = otpExpire;
@@ -146,16 +168,13 @@ export const forgotPassword = async (req, res, next) => {
     res.status(200).json({
       success: true,
       message: `6-digit OTP generated and sent to ${user.email}. Expires in 10 minutes.`,
-      otp, // Returned for convenient dev/testing
+      otp,
     });
   } catch (error) {
     next(error);
   }
 };
 
-// @desc    Verify OTP and reset password
-// @route   POST /api/auth/reset-password
-// @access  Public
 export const resetPassword = async (req, res, next) => {
   try {
     const { email, otp, newPassword } = req.body;
@@ -176,7 +195,6 @@ export const resetPassword = async (req, res, next) => {
       throw new Error('Invalid or expired OTP verification code.');
     }
 
-    // Update password and clear reset fields
     user.passwordHash = newPassword;
     user.resetOtp = null;
     user.resetOtpExpire = null;

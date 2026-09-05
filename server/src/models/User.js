@@ -24,6 +24,10 @@ const userSchema = new mongoose.Schema(
       default: 'Full Stack Engineer',
       trim: true,
     },
+    profileImage: {
+      type: String,
+      default: null,
+    },
     resetOtp: {
       type: String,
       default: null,
