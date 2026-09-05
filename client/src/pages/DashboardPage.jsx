@@ -36,14 +36,12 @@ import {
   BookOpen,
   Check,
   Building2,
-  Sun,
-  Moon,
 } from 'lucide-react';
 
 const DashboardPage = () => {
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
-  const { theme, toggleTheme } = useTheme();
+  const { theme } = useTheme();
   
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -149,7 +147,7 @@ const DashboardPage = () => {
 
   if (loading && !data) {
     return (
-      <div className="min-h-[70vh] flex flex-col items-center justify-center space-y-4 bg-white dark:bg-slate-900 font-baskerville">
+      <div className="min-h-[70vh] flex flex-col items-center justify-center space-y-4 bg-slate-50 dark:bg-slate-900 font-baskerville">
         <Loader2 className="w-10 h-10 text-blue-600 animate-spin" />
         <p className="text-slate-600 dark:text-slate-300 font-bold text-sm">Loading your candidate dashboard...</p>
       </div>
@@ -168,7 +166,7 @@ const DashboardPage = () => {
   } = data || {};
 
   return (
-    <div className="bg-white dark:bg-slate-900 min-h-screen py-8 font-baskerville transition-colors text-slate-900 dark:text-slate-100">
+    <div className="bg-slate-50 dark:bg-slate-900 min-h-screen py-8 font-baskerville transition-colors text-slate-900 dark:text-slate-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
         
         {/* Student Academic & Developer Profile Banner Card */}
@@ -187,24 +185,6 @@ const DashboardPage = () => {
                   <BookOpen className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
                   <span>{user?.currentYear || '3rd Year'} &bull; {user?.currentSemester || 'Semester 6'}</span>
                 </span>
-
-                {/* Theme Switcher Badge on Dashboard */}
-                <button
-                  onClick={toggleTheme}
-                  className="inline-flex items-center space-x-1 px-3 py-1 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-300 dark:border-slate-600 text-xs font-bold hover:border-blue-500 transition-colors"
-                >
-                  {theme === 'light' ? (
-                    <>
-                      <Moon className="w-3.5 h-3.5 text-blue-600" />
-                      <span>Dark Theme</span>
-                    </>
-                  ) : (
-                    <>
-                      <Sun className="w-3.5 h-3.5 text-amber-400" />
-                      <span>Light Theme</span>
-                    </>
-                  )}
-                </button>
               </div>
 
               <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight font-baskerville">
