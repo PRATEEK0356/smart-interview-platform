@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import heroBg from '../assets/hero_bg.jpg';
+import candidatePractice from '../assets/candidate_practice.jpg';
 import {
   Sparkles,
   PlayCircle,
@@ -81,58 +83,59 @@ const LandingPage = () => {
         </div>
       </header>
 
-      {/* Realistic Hero Section with Background Studio Image Overlay */}
+      {/* Realistic Hero Section with High-Visibility Background Studio Image */}
       <section className="relative py-20 lg:py-28 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto overflow-hidden">
-        {/* Background Image Container */}
-        <div className="absolute inset-0 z-0 rounded-3xl overflow-hidden shadow-2xl mx-4 my-2 border-2 border-blue-500/30">
+        {/* Background Image Layer */}
+        <div className="absolute inset-0 z-0 rounded-3xl overflow-hidden shadow-2xl mx-4 my-2 border-2 border-blue-500">
           <img
-            src="/images/hero_bg.jpg"
+            src={heroBg}
             alt="Technical Interview Studio Background"
-            className="w-full h-full object-cover opacity-15 filter contrast-125"
+            className="w-full h-full object-cover opacity-65 filter contrast-110 brightness-95"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-slate-50 via-slate-50/90 to-slate-50/70" />
+          {/* Subtle gradient overlay to keep text crisp while keeping studio image highly visible */}
+          <div className="absolute inset-0 bg-gradient-to-r from-slate-50/95 via-slate-50/80 to-slate-50/65" />
         </div>
 
         {/* Hero Main Content */}
         <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
           {/* Left Hero Text */}
           <div className="lg:col-span-6 space-y-6">
-            <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-xl bg-blue-50 border-2 border-blue-500 text-blue-700 text-xs font-black font-sans shadow-sm">
+            <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-xl bg-blue-50/90 border-2 border-blue-600 text-blue-800 text-xs font-black font-sans shadow-md backdrop-blur-sm">
               <ShieldCheck className="w-4 h-4 text-blue-600" />
               <span>Real-time Voice, Camera & Speech Evaluation</span>
             </div>
 
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-slate-900 tracking-tight leading-tight font-baskerville">
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-slate-900 tracking-tight leading-tight font-baskerville drop-shadow-sm">
               Walk into your next technical call with <span className="text-blue-600 underline decoration-blue-400 decoration-wavy decoration-2">absolute clarity.</span>
             </h1>
 
-            <p className="text-lg text-slate-700 leading-relaxed font-baskerville max-w-xl">
+            <p className="text-lg text-slate-800 font-medium leading-relaxed font-baskerville max-w-xl">
               Practice real technical and behavioral interview questions in a quiet, authentic studio environment. Get instant speech transcription, question reading, webcam posture feedback, and detailed mentor critiques.
             </p>
 
             <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-4 font-sans">
               <Link
                 to="/signup"
-                className="bg-blue-600 hover:bg-blue-700 text-white font-black px-7 py-4 rounded-xl text-base shadow-xl shadow-blue-600/20 flex items-center justify-center space-x-2 transition-all border-2 border-blue-700"
+                className="bg-blue-600 hover:bg-blue-700 text-white font-black px-7 py-4 rounded-xl text-base shadow-xl shadow-blue-600/30 flex items-center justify-center space-x-2 transition-all border-2 border-blue-700"
               >
                 <PlayCircle className="w-5 h-5" />
                 <span>Start Practice Session</span>
               </Link>
               <a
                 href="#how-it-works"
-                className="bg-white hover:bg-slate-100 text-slate-800 font-extrabold px-6 py-4 rounded-xl text-base border-2 border-slate-300 flex items-center justify-center space-x-2 transition-all shadow-sm"
+                className="bg-white/90 hover:bg-white text-slate-900 font-extrabold px-6 py-4 rounded-xl text-base border-2 border-slate-300 flex items-center justify-center space-x-2 transition-all shadow-md backdrop-blur-sm"
               >
                 <span>See Studio Features</span>
                 <ArrowRight className="w-4 h-4" />
               </a>
             </div>
 
-            <div className="pt-4 flex flex-wrap items-center gap-6 text-xs text-slate-600 font-extrabold font-sans">
-              <span className="flex items-center space-x-1.5">
+            <div className="pt-4 flex flex-wrap items-center gap-6 text-xs text-slate-900 font-extrabold font-sans">
+              <span className="flex items-center space-x-1.5 bg-white/80 px-2.5 py-1 rounded-lg border border-slate-200 shadow-sm">
                 <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                 <span>No credit card needed</span>
               </span>
-              <span className="flex items-center space-x-1.5">
+              <span className="flex items-center space-x-1.5 bg-white/80 px-2.5 py-1 rounded-lg border border-slate-200 shadow-sm">
                 <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                 <span>Java, Python, C++, Go, SQL & web stacks</span>
               </span>
@@ -141,11 +144,11 @@ const LandingPage = () => {
 
           {/* Right Live Interactive Sample Preview Card */}
           <div className="lg:col-span-6 font-baskerville">
-            <div className="bg-white border-2 border-blue-500 rounded-2xl p-6 sm:p-8 shadow-2xl space-y-6 relative">
+            <div className="bg-white/95 backdrop-blur-md border-2 border-blue-500 rounded-2xl p-6 sm:p-8 shadow-2xl space-y-6 relative">
               <div className="flex items-center justify-between border-b-2 border-slate-100 pb-3">
                 <div className="flex items-center space-x-2 font-sans">
                   <span className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse" />
-                  <span className="text-xs font-black uppercase tracking-wider text-slate-600">Interactive Studio Preview</span>
+                  <span className="text-xs font-black uppercase tracking-wider text-slate-700">Interactive Studio Preview</span>
                 </div>
                 <div className="flex space-x-1 font-sans">
                   {SAMPLE_QUESTIONS.map((q, idx) => (
@@ -176,7 +179,7 @@ const LandingPage = () => {
 
               {/* Sample Answer Box */}
               <div className="space-y-1">
-                <div className="flex items-center justify-between text-xs font-bold text-slate-500 font-sans">
+                <div className="flex items-center justify-between text-xs font-bold text-slate-600 font-sans">
                   <span>Candidate Verbal Response</span>
                   <span className="text-blue-600 flex items-center space-x-1">
                     <Mic className="w-3.5 h-3.5" />
@@ -217,7 +220,7 @@ const LandingPage = () => {
             <div className="lg:col-span-6">
               <div className="rounded-2xl overflow-hidden border-2 border-blue-500 shadow-2xl relative group">
                 <img
-                  src="/images/candidate_practice.jpg"
+                  src={candidatePractice}
                   alt="Candidate Practice Session Real-time Studio"
                   className="w-full h-auto object-cover transform group-hover:scale-105 transition-transform duration-500"
                 />
