@@ -13,7 +13,8 @@ export const loginUser = createAsyncThunk(
       localStorage.setItem('user', JSON.stringify(data.user));
       return data;
     } catch (error) {
-      return rejectWithValue(error.response?.data?.error || 'Login failed.');
+      const msg = error.response?.data?.error || error.response?.data?.message || (error.message === 'Network Error' ? 'Cannot connect to server. Please check your backend and database.' : 'Login failed.');
+      return rejectWithValue(msg);
     }
   }
 );
@@ -27,7 +28,8 @@ export const signupUser = createAsyncThunk(
       localStorage.setItem('user', JSON.stringify(data.user));
       return data;
     } catch (error) {
-      return rejectWithValue(error.response?.data?.error || 'Registration failed.');
+      const msg = error.response?.data?.error || error.response?.data?.message || (error.message === 'Network Error' ? 'Cannot connect to server. Please check your backend and database.' : 'Registration failed.');
+      return rejectWithValue(msg);
     }
   }
 );
