@@ -4,26 +4,40 @@ import { config } from './env.js';
 let mongoMemoryServer = null;
 
 export const connectDB = async () => {
+  const isCloudOrProd = config.nodeEnv === 'production' || Boolean(process.env.RENDER) || Boolean(process.env.PORT && process.env.PORT !== '5000');
+
   if (config.mongoUri) {
     try {
-      console.log(`Connecting to MongoDB Atlas at ${config.mongoUri.replace(/:([^@]+)@/, ':****@')}...`);
+      const sanitizedUri = config.mongoUri.replace(/:([^@]+)@/, ':****@');
+      console.log(`Connecting to MongoDB Atlas at ${sanitizedUri}...`);
+
       await mongoose.connect(config.mongoUri, {
-        serverSelectionTimeoutMS: 5000
+        serverSelectionTimeoutMS: 5000,
       });
+
       console.log('MongoDB connected successfully.');
       return;
     } catch (err) {
       console.error(`[MongoDB Error] Connection failed: ${err.message}`);
-      if (config.nodeEnv === 'production') {
-        console.error('CRITICAL: Check MONGO_URI in Render Environment Variables. Make sure username, password, and IP 0.0.0.0/0 permissions are set in MongoDB Atlas.');
+
+      if (isCloudOrProd) {
+        console.error('================================================================');
+        console.error('CRITICAL MONGO_URI AUTHENTICATION ERROR ON DEPLOYMENT:');
+        console.error(`Error details: ${err.message}`);
+        console.error('1. Check MongoDB Atlas -> "Database Access" -> Verify database username and password.');
+        console.error('2. Ensure your connection string includes a database name, e.g.:');
+        console.error('   mongodb+srv://<username>:<password>@cluster0.n4vgjvp.mongodb.net/smart_interview?retryWrites=true&w=majority');
+        console.error('3. Check MongoDB Atlas -> "Network Access" -> Allow 0.0.0.0/0 (Allow Access From Anywhere).');
+        console.error('================================================================');
         process.exit(1);
       }
+
       console.warn('Falling back to local in-memory MongoDB for local development...');
     }
   }
 
-  // Only use MongoMemoryServer in local development (not production)
-  if (config.nodeEnv !== 'production') {
+  // Only use MongoMemoryServer in local development (never on Render or Cloud)
+  if (!isCloudOrProd) {
     try {
       const { MongoMemoryServer } = await import('mongodb-memory-server');
       console.log('Starting in-memory MongoDB server for local development...');
@@ -36,7 +50,7 @@ export const connectDB = async () => {
       process.exit(1);
     }
   } else {
-    console.error('CRITICAL: MONGO_URI environment variable is required in production.');
+    console.error('CRITICAL: MONGO_URI environment variable is invalid or missing in deployment.');
     process.exit(1);
   }
 };
