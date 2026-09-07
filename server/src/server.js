@@ -14,7 +14,16 @@ app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
-// Health Check Endpoint
+// Root & Health Check Endpoints
+app.get('/', (req, res) => {
+  res.status(200).json({
+    name: 'Smart Interview Prep Platform API',
+    status: 'online',
+    message: 'Backend server is running smoothly.',
+    healthCheck: '/health',
+  });
+});
+
 app.get('/health', (req, res) => {
   res.status(200).json({
     status: 'healthy',
